@@ -3,3 +3,4 @@ backend/uploaded_samples/*
 backend/preprocess/__init__.py
 backend/preprocess/__pycache__/
 backend/__pycache__/
+backend/backend.log
