@@ -1,0 +1,5 @@
+::1 - - [08/Oct/2025 20:59:56] "GET / HTTP/1.1" 200 -
+::1 - - [08/Oct/2025 21:00:05] "GET / HTTP/1.1" 200 -
+::1 - - [08/Oct/2025 21:00:05] "GET /app.js?v=2.0 HTTP/1.1" 200 -
+::1 - - [08/Oct/2025 21:00:06] code 404, message File not found
+::1 - - [08/Oct/2025 21:00:06] "GET /favicon.ico HTTP/1.1" 404 -

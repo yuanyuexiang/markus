@@ -1,0 +1,261 @@
+INFO:     Started server process [44216]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+ERROR:    [Errno 48] error while attempting to bind on address ('0.0.0.0🔄 正在加载CLIP模型...
+✅ CLIP模型加载完成
+🚀 启动服务器: http://localhost:8000
+📖 API文档: http://localhost:8000/docs
+INFO:     127.0.0.1:51802 - "GET / HTTP/1.1" 200 OK
+2025-10-08 21:01:01.315048: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING:tensorflow:From /Users/yuanyuexiang/Desktop/workspace/markus/backend/venv/lib/python3.12/site-packages/tensorflow/python/compat/v2_compat.py:98: disable_resource_variables (from tensorflow.python.ops.resource_variables_toggle) is deprecated and will be removed in a future version.
+Instructions for updating:
+non-resource variables are not supported in the long term
+2025-10-08 21:01:08.297790: I tensorflow/compiler/mlir/mlir_graph_optimization_pass.cc:388] MLIR V1 optimization pass is not enabled
+💾 已保存样本: uploaded_samples/signature_template_20251008_210054.png, uploaded_samples/signature_query_20251008_210054.png
+📦 正在加载SigNet模型...
+✅ SigNet模型加载成功! 输入尺寸: (150, 220)
+✅ SigNet签名验证模型加载完成
+
+============================================================
+🔍 验证类型: signature
+🤖 使用算法: SigNet[classical]
+🎯 相似度: 1.0000
+📏 欧氏距离: 0.0000
+🧮 SSIM: 0.9815
+阈值: 0.9200
+============================================================
+
+INFO:     127.0.0.1:52289 - "POST /api/verify HTTP/1.1" 200 OK
+💾 已保存样本: uploaded_samples/signature_template_20251008_210134.png, uploaded_samples/signature_query_20251008_210134.png
+
+============================================================
+🔍 验证类型: signature
+🤖 使用算法: SigNet[classical]
+🎯 相似度: 0.8770
+📏 欧氏距离: 0.8301
+🧮 SSIM: 0.9231
+阈值: 0.9200
+============================================================
+
+INFO:     127.0.0.1:52555 - "POST /api/verify HTTP/1.1" 200 OK
+💾 已保存样本: uploaded_samples/signature_template_20251008_210214.png, uploaded_samples/signature_query_20251008_210214.png
+
+============================================================
+🔍 验证类型: signature
+🤖 使用算法: SigNet[classical]
+🎯 相似度: 0.8564
+📏 欧氏距离: 3.8955
+🧮 SSIM: 0.9014
+阈值: 0.9200
+============================================================
+
+INFO:     127.0.0.1:52815 - "POST /api/verify HTTP/1.1" 200 OK
+💾 已保存样本: uploaded_samples/signature_template_20251008_210219.png, uploaded_samples/signature_query_20251008_210219.png
+
+============================================================
+🔍 验证类型: signature
+🤖 使用算法: SigNet[classical]
+🎯 相似度: 0.8564
+📏 欧氏距离: 3.8955
+🧮 SSIM: 0.9014
+阈值: 0.9200
+============================================================
+
+INFO:     127.0.0.1:52853 - "POST /api/verify HTTP/1.1" 200 OK
+💾 已保存样本: uploaded_samples/signature_template_20251008_210259.png, uploaded_samples/signature_query_20251008_210259.png
+
+============================================================
+🔍 验证类型: signature
+🤖 使用算法: SigNet[classical]
+🎯 相似度: 0.8546
+📏 欧氏距离: 3.6056
+🧮 SSIM: 0.8996
+阈值: 0.9200
+============================================================
+
+INFO:     127.0.0.1:53108 - "POST /api/verify HTTP/1.1" 200 OK
+💾 已保存样本: uploaded_samples/signature_template_20251008_210301.png, uploaded_samples/signature_query_20251008_210301.png
+
+============================================================
+🔍 验证类型: signature
+🤖 使用算法: SigNet[classical]
+🎯 相似度: 0.8546
+📏 欧氏距离: 3.6056
+🧮 SSIM: 0.8996
+阈值: 0.9200
+============================================================
+
+INFO:     127.0.0.1:53108 - "POST /api/verify HTTP/1.1" 200 OK
+💾 已保存样本: uploaded_samples/signature_template_20251008_210346.png, uploaded_samples/signature_query_20251008_210346.png
+
+============================================================
+🔍 验证类型: signature
+🤖 使用算法: SigNet[classical]
+🎯 相似度: 0.8597
+📏 欧氏距离: 0.9205
+🧮 SSIM: 0.9049
+阈值: 0.9200
+============================================================
+
+INFO:     127.0.0.1:53415 - "POST /api/verify HTTP/1.1" 200 OK
+💾 已保存样本: uploaded_samples/signature_template_20251008_210753.png, uploaded_samples/signature_query_20251008_210753.png
+
+============================================================
+🔍 验证类型: signature
+🤖 使用算法: SigNet[classical]
+🎯 相似度: 1.0000
+📏 欧氏距离: 0.0000
+🧮 SSIM: 0.4285
+阈值: 0.9200
+============================================================
+
+INFO:     127.0.0.1:55034 - "POST /api/verify HTTP/1.1" 200 OK
+💾 已保存样本: uploaded_samples/signature_template_20251008_211202.png, uploaded_samples/signature_query_20251008_211202.png
+
+============================================================
+🔍 验证类型: signature
+🤖 使用算法: SigNet[classical]
+🎯 相似度: 0.8653
+📏 欧氏距离: 0.9857
+🧮 SSIM: 0.9108
+阈值: 0.9200
+============================================================
+
+INFO:     127.0.0.1:56692 - "POST /api/verify HTTP/1.1" 200 OK
+💾 已保存样本: uploaded_samples/signature_template_20251008_211238.png, uploaded_samples/signature_query_20251008_211238.png
+
+============================================================
+🔍 验证类型: signature
+🤖 使用算法: SigNet[classical]
+🎯 相似度: 0.8674
+📏 欧氏距离: 1.1239
+🧮 SSIM: 0.9131
+阈值: 0.9200
+============================================================
+
+INFO:     127.0.0.1:56931 - "POST /api/verify HTTP/1.1" 200 OK
+💾 已保存样本: uploaded_samples/signature_template_20251008_211257.png, uploaded_samples/signature_query_20251008_211257.png
+
+============================================================
+🔍 验证类型: signature
+🤖 使用算法: SigNet[classical]
+🎯 相似度: 0.9212
+📏 欧氏距离: 0.9643
+🧮 SSIM: 0.9697
+阈值: 0.9200
+============================================================
+
+INFO:     127.0.0.1:57056 - "POST /api/verify HTTP/1.1" 200 OK
+💾 已保存样本: uploaded_samples/signature_template_20251008_211411.png, uploaded_samples/signature_query_20251008_211411.png
+
+============================================================
+🔍 验证类型: signature
+🤖 使用算法: SigNet[classical]
+🎯 相似度: 0.9212
+📏 欧氏距离: 0.9643
+🧮 SSIM: 0.9697
+阈值: 0.9200
+============================================================
+
+INFO:     127.0.0.1:57541 - "POST /api/verify HTTP/1.1" 200 OK
+💾 已保存样本: uploaded_samples/signature_template_20251008_211435.png, uploaded_samples/signature_query_20251008_211435.png
+
+============================================================
+🔍 验证类型: signature
+🤖 使用算法: SigNet[classical]
+🎯 相似度: 0.8715
+📏 欧氏距离: 0.9857
+🧮 SSIM: 0.9173
+阈值: 0.9200
+============================================================
+
+INFO:     127.0.0.1:57703 - "POST /api/verify HTTP/1.1" 200 OK
+💾 已保存样本: uploaded_samples/signature_template_20251008_211746.png, uploaded_samples/signature_query_20251008_211746.png
+
+============================================================
+🔍 验证类型: signature
+🤖 使用算法: SigNet[classical]
+🎯 相似度: 0.8170
+📏 欧氏距离: 1.5650
+🧮 SSIM: 0.8600
+阈值: 0.9200
+============================================================
+
+INFO:     127.0.0.1:58918 - "POST /api/verify HTTP/1.1" 200 OK
+💾 已保存样本: uploaded_samples/signature_template_20251008_212347.png, uploaded_samples/signature_query_20251008_212347.png
+
+============================================================
+🔍 验证类型: signature
+🤖 使用算法: SigNet[classical]
+🎯 相似度: 0.8170
+📏 欧氏距离: 1.5650
+🧮 SSIM: 0.8600
+阈值: 0.9200
+============================================================
+
+INFO:     127.0.0.1:61337 - "POST /api/verify HTTP/1.1" 200 OK
+💾 已保存样本: uploaded_samples/signature_template_20251008_212506.png, uploaded_samples/signature_query_20251008_212506.png
+
+============================================================
+🔍 验证类型: signature
+🤖 使用算法: SigNet[classical]
+🎯 相似度: 1.0000
+📏 欧氏距离: 0.0000
+🧮 SSIM: 0.9557
+阈值: 0.9200
+============================================================
+
+INFO:     127.0.0.1:61849 - "POST /api/verify HTTP/1.1" 200 OK
+💾 已保存样本: uploaded_samples/signature_template_20251008_212709.png, uploaded_samples/signature_query_20251008_212709.png
+
+============================================================
+🔍 验证类型: signature
+🤖 使用算法: SigNet[classical]
+🎯 相似度: 1.0000
+📏 欧氏距离: 0.0000
+🧮 SSIM: 0.9266
+阈值: 0.9200
+============================================================
+
+INFO:     127.0.0.1:62667 - "POST /api/verify HTTP/1.1" 200 OK
+💾 已保存样本: uploaded_samples/seal_template_20251008_214858.png, uploaded_samples/seal_query_20251008_214858.png
+
+============================================================
+🔍 验证类型: seal
+🤖 使用算法: CLIP
+🎯 相似度: 0.9959
+阈值: 0.8800
+============================================================
+
+INFO:     127.0.0.1:54328 - "POST /api/verify HTTP/1.1" 200 OK
+💾 已保存样本: uploaded_samples/seal_template_20251008_215601.png, uploaded_samples/seal_query_20251008_215601.png
+
+============================================================
+🔍 验证类型: seal
+🤖 使用算法: CLIP
+🎯 相似度: 0.9959
+阈值: 0.8800
+============================================================
+
+INFO:     127.0.0.1:57162 - "POST /api/verify HTTP/1.1" 200 OK
+💾 已保存样本: uploaded_samples/seal_template_20251008_215642.png, uploaded_samples/seal_query_20251008_215642.png
+
+============================================================
+🔍 验证类型: seal
+🤖 使用算法: CLIP
+🎯 相似度: 0.9959
+阈值: 0.8800
+============================================================
+
+INFO:     127.0.0.1:57446 - "POST /api/verify HTTP/1.1" 200 OK
+💾 已保存样本: uploaded_samples/seal_template_20251008_215716.png, uploaded_samples/seal_query_20251008_215716.png
+
+============================================================
+🔍 验证类型: seal
+🤖 使用算法: CLIP
+🎯 相似度: 0.9959
+阈值: 0.8800
+============================================================
+
+INFO:     127.0.0.1:57681 - "POST /api/verify HTTP/1.1" 200 OK

@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>签名图章验证系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .type-selector {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .type-btn {
+            padding: 12px 30px;
+            margin: 0 10px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        .type-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .type-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        
+        .upload-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .upload-box {
+            border: 3px dashed #ddd;
+            border-radius: 12px;
+            padding: 20px;
+            background: #f8f9ff;
+            transition: all 0.3s;
+        }
+        
+        .upload-box:hover {
+            border-color: #667eea;
+            background: #f0f3ff;
+        }
+        
+        .upload-box h3 {
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .upload-btn {
+            display: inline-block;
+            padding: 10px 24px;
+            background: #667eea;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            font-size: 14px;
+        }
+        
+        .upload-btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+        
+        .reupload-btn {
+            padding: 6px 16px;
+            background: #f59e0b;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+        
+        .reupload-btn:hover {
+            background: #d97706;
+        }
+        
+        .canvas-container {
+            position: relative;
+            margin-top: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #f9f9f9;
+            display: none;
+            max-height: 600px;
+            overflow: auto;
+        }
+        
+        .canvas-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .preview-canvas {
+            display: block;
+            cursor: crosshair;
+        }
+        
+        .zoom-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 5px;
+            background: rgba(255,255,255,0.9);
+            padding: 5px;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        
+        .zoom-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: #667eea;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+        
+        .zoom-btn:hover {
+            background: #5568d3;
+        }
+        
+        .zoom-info {
+            padding: 5px 10px;
+            background: white;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #666;
+            line-height: 22px;
+        }
+        
+        .tools {
+            margin-top: 15px;
+            display: none;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .tool-group {
+            margin-bottom: 10px;
+        }
+        
+        .tool-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        .tool-btn {
+            padding: 8px 16px;
+            margin: 0 5px 5px 0;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .tool-btn:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+        
+        .tool-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .crop-preview {
+            margin-top: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid #10b981;
+            display: none;
+        }
+        
+        .crop-preview h4 {
+            color: #10b981;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        .crop-preview img {
+            max-width: 100%;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+        }
+        
+        .cropped-comparison {
+            display: none;
+            margin: 30px 0;
+            padding: 25px;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border-radius: 12px;
+            border: 2px solid #0ea5e9;
+        }
+        
+        .cropped-comparison h3 {
+            color: #0369a1;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .cropped-images {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .cropped-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .cropped-item h4 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        .cropped-item img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 6px;
+            border: 2px solid #ddd;
+        }
+        
+        .verify-section {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .verify-btn {
+            padding: 16px 60px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+        
+        .verify-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+        }
+        
+        .verify-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #ccc;
+        }
+        
+        .result-section {
+            display: none;
+            margin-top: 30px;
+            padding: 25px;
+            background: #f8f9ff;
+            border-radius: 12px;
+        }
+        
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .result-score {
+            font-size: 48px;
+            font-weight: bold;
+        }
+        
+        .score-high { color: #10b981; }
+        .score-medium { color: #f59e0b; }
+        .score-low { color: #ef4444; }
+        
+        .result-details {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .detail-item {
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .detail-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .detail-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        /* 算法类型特殊样式 */
+        #algorithmType {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 16px;
+            display: inline-block;
+        }
+        
+        #euclideanDistance {
+            color: #0ea5e9;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .result-recommendation {
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error {
+            display: none;
+            padding: 15px;
+            background: #fee;
+            border-left: 4px solid #f44;
+            border-radius: 8px;
+            margin-top: 20px;
+            color: #c33;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 签名图章验证系统</h1>
+        <p class="subtitle">签名: SigNet专业模型 · 印章: CLIP通用模型 · Mac本地运行</p>
+        
+        <!-- 类型选择 -->
+        <div class="type-selector">
+            <button class="type-btn active" data-type="signature">📝 手写签名验证</button>
+            <button class="type-btn" data-type="seal">🔴 印章图章验证</button>
+        </div>
+        
+        <!-- 上传区域 -->
+        <div class="upload-section">
+            <!-- 模板图片 -->
+            <div class="upload-box" id="templateBox">
+                <h3>
+                    <span>📋 模板图片</span>
+                    <button class="reupload-btn" id="templateReupload" style="display: none;">🔄 重新上传</button>
+                </h3>
+                <div id="templateUploadArea">
+                    <label class="upload-btn">
+                        选择文件
+                        <input type="file" id="templateInput" accept="image/*" style="display: none;">
+                    </label>
+                    <p style="margin-top: 10px; color: #666; font-size: 14px;">或拖拽文件到此处</p>
+                </div>
+                
+                <div class="canvas-container" id="templateCanvasContainer">
+                    <div class="canvas-wrapper">
+                        <canvas id="templateCanvas" class="preview-canvas"></canvas>
+                        <div class="zoom-controls">
+                            <button class="zoom-btn" data-action="zoom-in" data-target="template">+</button>
+                            <div class="zoom-info" id="templateZoomInfo">100%</div>
+                            <button class="zoom-btn" data-action="zoom-out" data-target="template">-</button>
+                            <button class="zoom-btn" data-action="reset" data-target="template">⟲</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tools" id="templateTools">
+                    <div class="tool-group">
+                        <div class="tool-label">选择工具</div>
+                        <button class="tool-btn active" data-tool="rectangle">⬜ 矩形选框</button>
+                        <button class="tool-btn" data-tool="circle">⭕ 圆形选框</button>
+                    </div>
+                    <div class="tool-group">
+                        <div class="tool-label">操作</div>
+                        <button class="tool-btn" data-tool="crop" style="background: #10b981; color: white; border-color: #10b981;">✂️ 裁剪选区</button>
+                        <button class="tool-btn" data-tool="reset">🔄 重置选区</button>
+                    </div>
+                </div>
+                
+                <div class="crop-preview" id="templateCropPreview">
+                    <h4>✅ 裁剪预览</h4>
+                    <img id="templateCropImage" src="" alt="裁剪结果">
+                </div>
+            </div>
+            
+            <!-- 待验证图片 -->
+            <div class="upload-box" id="queryBox">
+                <h3>
+                    <span>🔎 待验证图片</span>
+                    <button class="reupload-btn" id="queryReupload" style="display: none;">🔄 重新上传</button>
+                </h3>
+                <div id="queryUploadArea">
+                    <label class="upload-btn">
+                        选择文件
+                        <input type="file" id="queryInput" accept="image/*" style="display: none;">
+                    </label>
+                    <p style="margin-top: 10px; color: #666; font-size: 14px;">或拖拽文件到此处</p>
+                </div>
+                
+                <div class="canvas-container" id="queryCanvasContainer">
+                    <div class="canvas-wrapper">
+                        <canvas id="queryCanvas" class="preview-canvas"></canvas>
+                        <div class="zoom-controls">
+                            <button class="zoom-btn" data-action="zoom-in" data-target="query">+</button>
+                            <div class="zoom-info" id="queryZoomInfo">100%</div>
+                            <button class="zoom-btn" data-action="zoom-out" data-target="query">-</button>
+                            <button class="zoom-btn" data-action="reset" data-target="query">⟲</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tools" id="queryTools">
+                    <div class="tool-group">
+                        <div class="tool-label">选择工具</div>
+                        <button class="tool-btn active" data-tool="rectangle">⬜ 矩形选框</button>
+                        <button class="tool-btn" data-tool="circle">⭕ 圆形选框</button>
+                    </div>
+                    <div class="tool-group">
+                        <div class="tool-label">操作</div>
+                        <button class="tool-btn" data-tool="crop" style="background: #10b981; color: white; border-color: #10b981;">✂️ 裁剪选区</button>
+                        <button class="tool-btn" data-tool="reset">🔄 重置选区</button>
+                    </div>
+                </div>
+                
+                <div class="crop-preview" id="queryCropPreview">
+                    <h4>✅ 裁剪预览</h4>
+                    <img id="queryCropImage" src="" alt="裁剪结果">
+                </div>
+            </div>
+        </div>
+        
+        <!-- 裁剪结果对比 -->
+        <div class="cropped-comparison" id="croppedComparison">
+            <h3>📊 裁剪结果对比</h3>
+            <div class="cropped-images">
+                <div class="cropped-item">
+                    <h4>📋 模板裁剪结果</h4>
+                    <img id="templateCroppedFinal" src="" alt="模板裁剪">
+                </div>
+                <div class="cropped-item">
+                    <h4>🔎 待验证裁剪结果</h4>
+                    <img id="queryCroppedFinal" src="" alt="待验证裁剪">
+                </div>
+            </div>
+        </div>
+        
+        <!-- 验证按钮 -->
+        <div class="verify-section">
+            <button class="verify-btn" id="verifyBtn" disabled>🚀 开始验证</button>
+        </div>
+        
+        <!-- 加载中 -->
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>正在验证中...</p>
+        </div>
+        
+        <!-- 错误提示 -->
+        <div class="error" id="error"></div>
+        
+        <!-- 验证结果 -->
+        <div class="result-section" id="resultSection">
+            <div class="result-header">
+                <div>
+                    <h2>验证结果</h2>
+                    <p id="resultType" style="color: #666;"></p>
+                </div>
+                <div class="result-score" id="resultScore">0%</div>
+            </div>
+            
+            <div class="result-details">
+                <div class="detail-item">
+                    <div class="detail-label">🤖 算法模型</div>
+                    <div class="detail-value" id="algorithmType">-</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">📊 相似度</div>
+                    <div class="detail-value" id="similarityScore">0%</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">📏 欧氏距离</div>
+                    <div class="detail-value" id="euclideanDistance">-</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">⏱️ 处理时间</div>
+                    <div class="detail-value" id="processingTime">0ms</div>
+                </div>
+            </div>
+            
+            <div class="result-recommendation" id="recommendation">
+                等待验证...
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js?v=2.0"></script>
+</body>
+</html>

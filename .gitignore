@@ -1,0 +1,5 @@
+backend/venv/
+backend/uploaded_samples/*
+backend/preprocess/__init__.py
+backend/preprocess/__pycache__/
+backend/__pycache__/
