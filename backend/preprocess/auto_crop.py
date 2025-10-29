@@ -50,6 +50,146 @@ def _foreground_mask(img: np.ndarray) -> np.ndarray:
     mask = cv2.dilate(mask, kernel_dilate, iterations=1)
     return mask
 
+def clean_signature_conservative(binary: np.ndarray) -> np.ndarray:
+    """保守清洁模式 - 适合中文签名
+    
+    只删除明显的杂质，保护所有可能是签名笔画的部分。
+    
+    策略：
+    1. 只删除极小噪点 (< 5像素)
+    2. 保护中心区域的所有笔画
+    3. 允许大长宽比 (长横、长竖)
+    4. 基于密度过滤孤立杂质
+    
+    Args:
+        binary: 二值图像，前景=255，背景=0
+        
+    Returns:
+        清洁后的二值图像
+    """
+    if binary.size == 0:
+        return binary
+        
+    # 连通域分析
+    num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(binary, connectivity=8)
+    
+    if num_labels <= 1:  # 只有背景
+        return binary
+    
+    h, w = binary.shape
+    
+    # 第1步：计算签名主体中心（用于密度过滤）
+    valid_centers = []
+    valid_areas = []
+    for i in range(1, num_labels):
+        area = stats[i, cv2.CC_STAT_AREA]
+        if area >= 5:  # 只考虑非极小噪点
+            valid_centers.append(centroids[i])
+            valid_areas.append(area)
+    
+    if not valid_centers:
+        return binary
+    
+    # 加权质心（大笔画权重更高）
+    valid_centers = np.array(valid_centers)
+    valid_areas = np.array(valid_areas)
+    weights = valid_areas / valid_areas.sum()
+    main_center = np.average(valid_centers, axis=0, weights=weights)
+    
+    # 计算密集区域半径（包含85%的笔画）
+    distances = np.linalg.norm(valid_centers - main_center, axis=1)
+    if len(distances) > 0:
+        radius = np.percentile(distances, 85)
+    else:
+        radius = max(h, w)
+    
+    # 第2步：智能过滤
+    mask = np.zeros_like(binary)
+    
+    for i in range(1, num_labels):
+        area = stats[i, cv2.CC_STAT_AREA]
+        width = stats[i, cv2.CC_STAT_WIDTH]
+        height = stats[i, cv2.CC_STAT_HEIGHT]
+        x = stats[i, cv2.CC_STAT_LEFT]
+        y = stats[i, cv2.CC_STAT_TOP]
+        
+        # 距离主体中心的距离
+        distance_to_center = np.linalg.norm(centroids[i] - main_center)
+        
+        # 过滤规则（保守策略）
+        
+        # a) 删除极小噪点
+        if area < 5:
+            continue
+        
+        # b) 删除极大背景块
+        if area > h * w * 0.7:
+            continue
+        
+        # c) 长宽比过滤（允许到30，保护长横竖）
+        aspect_ratio = max(width, height) / (min(width, height) + 1e-5)
+        if aspect_ratio > 30:
+            # 但如果在中心区域，可能是签名的一部分
+            center_x = x + width / 2
+            center_y = y + height / 2
+            if not (0.2 * w < center_x < 0.8 * w and 0.2 * h < center_y < 0.8 * h):
+                continue
+        
+        # d) 密度过滤：远离主体且很小的是杂质
+        if distance_to_center > radius * 1.8 and area < 30:
+            continue
+        
+        # e) 边缘小块过滤
+        margin = 3
+        at_edge = (x < margin or y < margin or 
+                   x + width > w - margin or y + height > h - margin)
+        if at_edge and area < 30:
+            continue
+        
+        # 保留这个连通域
+        mask[labels == i] = 255
+    
+    return mask
+
+def clean_signature_with_morph(gray: np.ndarray, mode='conservative') -> np.ndarray:
+    """完整的签名清洁流程
+    
+    Args:
+        gray: 灰度图像（背景亮，签名暗）
+        mode: 'conservative' (中文) 或 'aggressive' (英文)
+        
+    Returns:
+        清洁后的二值图像（前景255，背景0）
+    """
+    if gray.dtype != np.uint8:
+        gray = gray.astype(np.uint8)
+    
+    # 策略：使用保守的固定阈值，只保留明显的签名笔画
+    # 设置阈值为120，只保留较暗的部分（真正的笔画）
+    # 这样可以避免把灰色过渡区也当作前景
+    threshold = 120
+    
+    # 简单阈值二值化
+    _, binary = cv2.threshold(gray, threshold, 255, cv2.THRESH_BINARY_INV)
+    
+    if mode == 'conservative':
+        # 温和去噪（去除小噪点）
+        kernel_tiny = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2, 2))
+        binary = cv2.morphologyEx(binary, cv2.MORPH_OPEN, kernel_tiny, iterations=1)
+        
+        # 保守清洁（去除离散杂质）
+        cleaned = clean_signature_conservative(binary)
+        
+    else:  # aggressive
+        # 更强的形态学处理
+        kernel_small = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+        binary = cv2.morphologyEx(binary, cv2.MORPH_OPEN, kernel_small, iterations=1)
+        
+        # 清洁
+        cleaned = clean_signature_conservative(binary)
+    
+    return cleaned
+
 def _largest_foreground_bbox(mask: np.ndarray, min_area_ratio: float = 0.0002) -> Optional[Tuple[int,int,int,int]]:
     """寻找前景连通域外接矩形 (合并所有满足面积要求的区域).
     返回 (y_min, y_max, x_min, x_max) 或 None
@@ -141,7 +281,58 @@ def robust_preprocess(gray: np.ndarray) -> np.ndarray:
     final = cv2.resize(canvas, (FINAL_SIZE[1], FINAL_SIZE[0]), interpolation=cv2.INTER_AREA)
     return final
 
+def robust_preprocess_with_clean(gray: np.ndarray, clean_mode='conservative') -> np.ndarray:
+    """高鲁棒性预处理 + 签名清洁
+    
+    流程：
+    1. 清洁签名（去除杂质）
+    2. 自动裁剪对齐
+    3. 标准化到目标尺寸
+    
+    Args:
+        gray: 输入灰度图
+        clean_mode: 'conservative'(中文) 或 'aggressive'(英文)
+        
+    Returns:
+        处理后的标准化图像
+    """
+    try:
+        if gray.ndim == 3:
+            gray = cv2.cvtColor(gray, cv2.COLOR_BGR2GRAY)
+        
+        # 1. 清洁签名
+        cleaned_binary = clean_signature_with_morph(gray, mode=clean_mode)
+        
+        # 2. 转回灰度（反转，让签名是黑色）
+        cleaned_gray = cv2.bitwise_not(cleaned_binary)
+        
+        # 3. 自动对齐
+        out = auto_align_signature(cleaned_gray)
+        if out is not None:
+            return out
+            
+        # 4. 失败回退
+        h, w = cleaned_gray.shape
+        canvas = np.ones(CANVAS_SIZE, dtype=np.uint8) * 255
+        scale = min(CANVAS_SIZE[0]/h, CANVAS_SIZE[1]/w)
+        new_h = max(1, int(h*scale))
+        new_w = max(1, int(w*scale))
+        resized = cv2.resize(cleaned_gray, (new_w, new_h), 
+                            interpolation=cv2.INTER_AREA if scale<1 else cv2.INTER_CUBIC)
+        oy = (CANVAS_SIZE[0]-new_h)//2
+        ox = (CANVAS_SIZE[1]-new_w)//2
+        canvas[oy:oy+new_h, ox:ox+new_w] = resized
+        final = cv2.resize(canvas, (FINAL_SIZE[1], FINAL_SIZE[0]), interpolation=cv2.INTER_AREA)
+        return final
+        
+    except Exception:
+        # 完全失败，回退到无清洁版本
+        return robust_preprocess(gray)
+
 __all__ = [
     'robust_preprocess',
-    'auto_align_signature'
+    'robust_preprocess_with_clean',
+    'auto_align_signature',
+    'clean_signature_with_morph',
+    'clean_signature_conservative'
 ]

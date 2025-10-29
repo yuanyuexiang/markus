@@ -18,11 +18,19 @@ cd ..
 
 # 等待后端启动
 echo "⏳ 等待后端初始化..."
-sleep 8
+sleep 3
+
+# 等待端口监听（最多等待 20 秒）
+for i in {1..20}; do
+    if lsof -ti :8000 > /dev/null 2>&1; then
+        break
+    fi
+    sleep 1
+done
 
 # 检查后端
-if lsof -i :8000 > /dev/null 2>&1; then
-    echo "✅ 后端启动成功！"
+if lsof -ti :8000 > /dev/null 2>&1; then
+    echo "✅ 后端启动成功 (PID: $(lsof -ti :8000))！"
 else
     echo "❌ 后端启动失败，查看 backend/backend.log"
     exit 1
@@ -38,8 +46,8 @@ cd ..
 sleep 2
 
 # 检查前端
-if lsof -i :3000 > /dev/null 2>&1; then
-    echo "✅ 前端启动成功！"
+if lsof -ti :3000 > /dev/null 2>&1; then
+    echo "✅ 前端启动成功 (PID: $(lsof -ti :3000))！"
 else
     echo "❌ 前端启动失败，查看 frontend/frontend.log"
     exit 1

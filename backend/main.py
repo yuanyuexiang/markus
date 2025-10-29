@@ -6,6 +6,7 @@
 from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 import clip
 import torch
 from PIL import Image
@@ -28,6 +29,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# 挂载静态文件服务，用于访问上传的样本和调试图片
+app.mount("/uploaded_samples", StaticFiles(directory="uploaded_samples"), name="uploaded_samples")
 
 # 全局加载CLIP模型(印章使用)
 print("🔄 正在加载CLIP模型...")
@@ -144,31 +148,66 @@ def compute_ssim_similarity(img1: np.ndarray, img2: np.ndarray) -> float:
 async def root():
     return {"message": "签名图章验证系统 API", "status": "running"}
 
-def compute_signet_similarity(template_img, query_img):
-    """使用SigNet计算签名相似度，并返回辅助指标"""
+def compute_signet_similarity(template_img, query_img, enable_clean=True, clean_mode='conservative'):
+    """使用SigNet计算签名相似度，支持签名清洁功能
+    
+    Args:
+        template_img: 模板图像
+        query_img: 查询图像
+        enable_clean: 是否启用签名清洁
+        clean_mode: 清洁模式 'conservative'(中文) 或 'aggressive'(英文)
+    
+    Returns:
+        包含相似度、距离、SSIM、处理流程信息的字典
+    """
     model = load_signet_model()
     if model is None:
         return None
     
     try:
         preprocess_signature = _signet_imports['preprocess_signature']
-        # 延迟导入增强预处理 (首次调用时可能还未导入)
+        # 延迟导入增强预处理
         try:
-            from preprocess.auto_crop import robust_preprocess
+            from preprocess.auto_crop import robust_preprocess, robust_preprocess_with_clean, clean_signature_with_morph
         except Exception as _e:
-            robust_preprocess = None  # 若文件缺失仍可回退
+            robust_preprocess = None
+            robust_preprocess_with_clean = None
+            clean_signature_with_morph = None
+        
         # 转换PIL Image到numpy array (灰度图)
         template_np = np.array(template_img.convert('L'))
         query_np = np.array(query_img.convert('L'))
-        # 优先使用鲁棒自动裁剪 (若成功返回 150x220)
+        
+        # 保存高分辨率的清洁图片（用于前端展示）
+        template_cleaned_display = None
+        query_cleaned_display = None
+        
+        if enable_clean and clean_signature_with_morph is not None:
+            # 对原始图片进行清洁，保持原始尺寸
+            template_cleaned_display = clean_signature_with_morph(template_np, mode=clean_mode)
+            query_cleaned_display = clean_signature_with_morph(query_np, mode=clean_mode)
+            # 反转（清洁后是前景255，需要转成背景255）
+            template_cleaned_display = cv2.bitwise_not(template_cleaned_display)
+            query_cleaned_display = cv2.bitwise_not(query_cleaned_display)
+        
+        # 传统预处理路径（回退）
         fallback_template = preprocess_signature(template_np, canvas_size=(952, 1360))
         fallback_query = preprocess_signature(query_np, canvas_size=(952, 1360))
 
-        if robust_preprocess is not None:
+        # 选择增强预处理路径
+        if enable_clean and robust_preprocess_with_clean is not None:
+            # 使用带清洁的预处理
+            t_auto = robust_preprocess_with_clean(template_np, clean_mode=clean_mode)
+            q_auto = robust_preprocess_with_clean(query_np, clean_mode=clean_mode)
+            pipeline_name = f'robust+clean({clean_mode})'
+        elif robust_preprocess is not None:
+            # 使用无清洁的鲁棒预处理
             t_auto = robust_preprocess(template_np)
             q_auto = robust_preprocess(query_np)
+            pipeline_name = 'robust'
         else:
             t_auto = q_auto = None
+            pipeline_name = 'classical'
 
         auto_valid = (
             t_auto is not None and q_auto is not None and
@@ -181,45 +220,71 @@ def compute_signet_similarity(template_img, query_img):
         if auto_valid:
             dist_auto = model.compute_similarity(t_auto, q_auto)
 
+        # 选择更优路径
         if dist_auto is not None and dist_auto <= dist_fallback:
-            template_processed = t_auto
-            query_processed = q_auto
-            pipeline = 'robust'
             euclidean_dist = dist_auto
+            pipeline = pipeline_name
             ssim_inputs = (t_auto, q_auto)
         else:
-            template_processed = fallback_template
-            query_processed = fallback_query
-            pipeline = 'classical'
             euclidean_dist = dist_fallback
-            # SSIM 优先使用自动裁剪结果，如不可用则使用 fallback
+            pipeline = 'classical'
+            # SSIM 优先使用自动裁剪结果
             if auto_valid:
                 ssim_inputs = (t_auto, q_auto)
             else:
                 ssim_inputs = (fallback_template, fallback_query)
         
         # 转换为相似度分数(0-1)
-        # SigNet论文阈值: distance < 0.145 为真签名
-        # 映射公式: 距离0 = 100%相似, 距离0.145 = 80%相似, 距离越大越低
-        # similarity = max(0, (threshold - distance) / threshold) * 0.8 + (1 - max(0, (threshold - distance) / threshold)) * 0.2
-        # 简化: 指数衰减
         threshold_dist = 0.15  # SigNet论文阈值
         similarity = np.exp(-euclidean_dist / threshold_dist)
 
-        # 结构相似度辅助（用于对齐人工裁剪）
+        # 结构相似度辅助
         try:
             ssim_score = compute_ssim_similarity(ssim_inputs[0], ssim_inputs[1])
         except Exception:
             ssim_score = None
         
-        return {
+        result = {
             'similarity': float(similarity),
             'distance': float(euclidean_dist),
             'ssim': float(ssim_score) if ssim_score is not None else None,
-            'pipeline': pipeline
+            'pipeline': pipeline,
+            'clean_enabled': enable_clean,
+            'clean_mode': clean_mode if enable_clean else None
         }
+        
+        # 保存高分辨率清洁图片用于前端展示
+        if enable_clean and template_cleaned_display is not None and query_cleaned_display is not None:
+            try:
+                debug_dir = 'uploaded_samples/debug'
+                os.makedirs(debug_dir, exist_ok=True)
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                
+                # 保存原始尺寸的清洁图片
+                template_path = f'{debug_dir}/template_cleaned_{timestamp}.png'
+                query_path = f'{debug_dir}/query_cleaned_{timestamp}.png'
+                
+                cv2.imwrite(template_path, template_cleaned_display)
+                cv2.imwrite(query_path, query_cleaned_display)
+                
+                result['debug_images'] = {
+                    'template': f'debug/template_cleaned_{timestamp}.png',
+                    'query': f'debug/query_cleaned_{timestamp}.png'
+                }
+                
+                print(f"✅ 已保存清洁图片: {template_path} ({template_cleaned_display.shape})")
+                print(f"✅ 已保存清洁图片: {query_path} ({query_cleaned_display.shape})")
+                
+            except Exception as e:
+                print(f"⚠️ 保存调试图像失败: {e}")
+                import traceback
+                traceback.print_exc()
+        
+        return result
     except Exception as e:
         print(f"⚠️ SigNet处理失败: {e}")
+        import traceback
+        traceback.print_exc()
         return None
 
 def compute_clip_similarity(template_img, query_img):
@@ -245,12 +310,18 @@ def compute_clip_similarity(template_img, query_img):
 async def verify_signature(
     template_image: UploadFile = File(...),
     query_image: UploadFile = File(...),
-    verification_type: str = Form(default="signature")
+    verification_type: str = Form(default="signature"),
+    enable_clean: bool = Form(default=True),
+    clean_mode: str = Form(default="conservative")
 ):
     """
     验证签名或图章的相似度
     签名: SigNet专业模型
     印章: CLIP模型
+    
+    参数:
+    - enable_clean: 是否启用签名清洁（去除杂质）
+    - clean_mode: 清洁模式 'conservative'(中文签名) 或 'aggressive'(英文签名)
     """
     start_time = time.time()
 
@@ -277,14 +348,20 @@ async def verify_signature(
         result = None
         
         if verification_type == "signature":
-            # 签名用SigNet
-            result = compute_signet_similarity(template_img, query_img)
+            # 签名用SigNet（支持清洁功能）
+            result = compute_signet_similarity(
+                template_img, 
+                query_img, 
+                enable_clean=enable_clean,
+                clean_mode=clean_mode
+            )
             if result is not None:
                 similarity = result['similarity']
                 euclidean_distance = result['distance']
                 signature_ssim = result.get('ssim')
                 pipeline = result.get('pipeline', 'SigNet')
-                algorithm_used = f"SigNet[{pipeline}]"
+                clean_info = f"+clean({clean_mode})" if result.get('clean_enabled') else ""
+                algorithm_used = f"SigNet[{pipeline}{clean_info}]"
                 threshold = 0.92  # SigNet阈值(需根据实际数据调整)
                 if signature_ssim is not None:
                     # SSIM为人工裁剪/轻微变形提供兜底
@@ -337,7 +414,7 @@ async def verify_signature(
         
         processing_time = time.time() - start_time
         
-        return {
+        response_data = {
             'success': True,
             'type': verification_type,
             'algorithm': algorithm_used,
@@ -350,8 +427,16 @@ async def verify_signature(
             'is_authentic': final_score > threshold and confidence != 'low',
             'threshold': threshold,
             'recommendation': recommendation,
-            'processing_time_ms': round(processing_time * 1000, 2)
+            'processing_time_ms': round(processing_time * 1000, 2),
+            'clean_enabled': enable_clean if verification_type == "signature" else None,
+            'clean_mode': clean_mode if verification_type == "signature" and enable_clean else None
         }
+        
+        # 添加调试图像路径（如果有）
+        if verification_type == "signature" and result is not None and 'debug_images' in result:
+            response_data['debug_images'] = result['debug_images']
+        
+        return response_data
         
     except Exception as e:
         import traceback

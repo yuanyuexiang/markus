@@ -530,6 +530,22 @@ function displayResult(result) {
     // 显示处理时间
     document.getElementById('processingTime').textContent = result.processing_time_ms + 'ms';
     
+    // 显示清洁后的图片（仅签名验证且启用了清洁）
+    const cleanedComparison = document.getElementById('cleanedComparison');
+    if (result.type === 'signature' && result.debug_images && result.clean_enabled) {
+        const backendUrl = 'http://localhost:8000';
+        const templatePath = result.debug_images.template;
+        const queryPath = result.debug_images.query;
+        
+        document.getElementById('templateCleanedImage').src = `${backendUrl}/uploaded_samples/${templatePath}`;
+        document.getElementById('queryCleanedImage').src = `${backendUrl}/uploaded_samples/${queryPath}`;
+        document.getElementById('cleanModeInfo').textContent = result.clean_mode || 'conservative';
+        
+        cleanedComparison.style.display = 'block';
+    } else {
+        cleanedComparison.style.display = 'none';
+    }
+    
     // 显示建议
     const recommendationElement = document.getElementById('recommendation');
     recommendationElement.innerHTML = `
