@@ -3,6 +3,9 @@ services:
     container_name: markus
     image: ${DOCKER_IMAGE_TAG}
     restart: always
+    volumes:
+      - markus-data:/app/backend/uploads
+      - markus-logs:/app/backend/uploaded_samples
     healthcheck:
       disable: true
     networks:
@@ -14,6 +17,10 @@ services:
       - "traefik.http.routers.markus.service=markus"
       - "traefik.http.routers.markus.tls.certresolver=dnspodresolver"
       - "traefik.http.services.markus.loadbalancer.server.port=8000"
+
+volumes:
+  markus-data:
+  markus-logs:
 
 networks:
   matrix-network:

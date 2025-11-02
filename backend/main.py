@@ -57,6 +57,11 @@ def load_gnn_verifier():
         print(traceback.format_exc())
         return None
 
+# 确保必要的目录存在
+os.makedirs("uploaded_samples", exist_ok=True)
+os.makedirs("uploads", exist_ok=True)
+os.makedirs("models", exist_ok=True)
+
 # 挂载静态文件服务，用于访问上传的样本和调试图片
 app.mount("/uploaded_samples", StaticFiles(directory="uploaded_samples"), name="uploaded_samples")
 
