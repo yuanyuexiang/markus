@@ -12,12 +12,10 @@ RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debia
     sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list
 
 # 安装系统依赖 (OpenCV 和 Git 需要)
-RUN apt-get update && apt-get install -y \
-    git \
-    libgl1 \
-    libglib2.0-0 \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update 
+RUN apt-get install -y git curl
+RUN apt-get install -y libgl1 libglib2.0-0
+RUN rm -rf /var/lib/apt/lists/*
 
 # 配置 pip 使用国内镜像源 (加速 Python 包下载)
 RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/
