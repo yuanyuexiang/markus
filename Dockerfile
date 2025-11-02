@@ -18,7 +18,7 @@ RUN apt-get install -y libgl1 libglib2.0-0
 RUN rm -rf /var/lib/apt/lists/*
 
 # 配置 pip 使用国内镜像源 (加速 Python 包下载)
-RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/
+#RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/
 
 # 复制 requirements.txt 并安装 Python 依赖
 COPY backend/requirements.txt ./backend/
