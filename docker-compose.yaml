@@ -13,7 +13,7 @@ services:
       - "traefik.http.routers.markus.entrypoints=websecure"
       - "traefik.http.routers.markus.service=markus"
       - "traefik.http.routers.markus.tls.certresolver=dnspodresolver"
-      - "traefik.http.services.markus.loadbalancer.server.port=3000"
+      - "traefik.http.services.markus.loadbalancer.server.port=8000"
 
 networks:
   matrix-network:
