@@ -1,0 +1,20 @@
+services:
+   markus:
+    container_name: markus
+    image: ${DOCKER_IMAGE_TAG}
+    restart: always
+    healthcheck:
+      disable: true
+    networks:
+      - matrix-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.markus.rule=Host(`markus.matrix-net.com`)" # 替换为你的域名
+      - "traefik.http.routers.markus.entrypoints=websecure"
+      - "traefik.http.routers.markus.service=markus"
+      - "traefik.http.routers.markus.tls.certresolver=dnspodresolver"
+      - "traefik.http.services.markus.loadbalancer.server.port=3000"
+
+networks:
+  matrix-network:
+    external: true
