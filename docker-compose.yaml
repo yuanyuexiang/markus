@@ -12,7 +12,7 @@ services:
       - matrix-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.markus.rule=Host(`markus.matrix-net.com`)" # 替换为你的域名
+      - "traefik.http.routers.markus.rule=Host(`markus.matrix-net.tech`)" # 替换为你的域名
       - "traefik.http.routers.markus.entrypoints=websecure"
       - "traefik.http.routers.markus.service=markus"
       - "traefik.http.routers.markus.tls.certresolver=dnspodresolver"
