@@ -1,6 +1,7 @@
 // 全局状态
 const state = {
     verificationType: 'signature',
+    algorithm: 'gnn',  // 默认使用GNN算法
     templateImage: null,
     queryImage: null,
     templateCropped: null,
@@ -62,7 +63,8 @@ class CanvasManager {
     drawImage() {
         if (!this.image) return;
         
-        // 计算缩放后的尺寸
+        // 保持原始尺寸,不自动缩放
+        // 只应用用户手动的缩放操作
         const scaledWidth = this.image.width * this.scale;
         const scaledHeight = this.image.height * this.scale;
         
@@ -286,6 +288,14 @@ document.querySelectorAll('.type-btn').forEach(btn => {
         btn.classList.add('active');
         state.verificationType = btn.dataset.type;
         
+        // 显示/隐藏算法选择器
+        const algorithmSelector = document.getElementById('algorithmSelector');
+        if (state.verificationType === 'signature') {
+            algorithmSelector.style.display = 'block';
+        } else {
+            algorithmSelector.style.display = 'none';
+        }
+        
         // 更新工具提示
         if (state.verificationType === 'seal') {
             // 图章推荐圆形工具
@@ -298,6 +308,26 @@ document.querySelectorAll('.type-btn').forEach(btn => {
         }
     });
 });
+
+// 算法选择
+const algorithmSelect = document.getElementById('algorithmSelect');
+const algorithmDesc = document.getElementById('algorithmDesc');
+
+if (algorithmSelect) {
+    algorithmSelect.addEventListener('change', (e) => {
+        state.algorithm = e.target.value;
+        
+        // 更新算法描述
+        const descriptions = {
+            'signet': '适合专业签名验证',
+            'gnn': '基于关键点结构,对旋转/缩放鲁棒',
+            'clip': '通用视觉模型,适合多样化图像'
+        };
+        
+        algorithmDesc.textContent = descriptions[state.algorithm] || '';
+        console.log('算法切换到:', state.algorithm);
+    });
+}
 
 // 文件上传
 document.getElementById('templateInput').addEventListener('change', async (e) => {
@@ -451,11 +481,14 @@ document.getElementById('verifyBtn').addEventListener('click', async () => {
         formData.append('template_image', templateBlob, 'template.png');
         formData.append('query_image', queryBlob, 'query.png');
         formData.append('verification_type', state.verificationType);
+        formData.append('algorithm', state.algorithm);  // 新增: 发送算法选择
         
         console.log('📤 发送请求到后端...');
+        console.log('   - 验证类型:', state.verificationType);
+        console.log('   - 算法:', state.algorithm);
         
-        // 发送请求
-        const response = await fetch('http://localhost:8000/api/verify', {
+        // 发送请求 (使用相对路径,支持单容器部署)
+        const response = await fetch('/api/verify', {
             method: 'POST',
             body: formData,
             mode: 'cors',
@@ -481,7 +514,7 @@ document.getElementById('verifyBtn').addEventListener('click', async () => {
     } catch (error) {
         console.error('❌ 验证错误:', error);
         document.getElementById('loading').style.display = 'none';
-        document.getElementById('error').textContent = '网络错误: ' + error.message + ' (请检查后端是否运行在 http://localhost:8000)';
+        document.getElementById('error').textContent = '网络错误: ' + error.message + ' (请检查服务是否正常运行)';
         document.getElementById('error').style.display = 'block';
         console.error('Verification error:', error);
     }
@@ -511,20 +544,35 @@ function displayResult(result) {
     document.getElementById('resultType').textContent = typeName + ' · 置信度: ' + result.confidence.toUpperCase();
     
     // 显示算法类型
-    const algorithmName = result.algorithm || 'CLIP';
-    const algorithmEmoji = algorithmName.includes('SigNet') ? '🧠 SigNet' : '🎨 CLIP';
+    let algorithmName = result.algorithm || 'CLIP';
+    let algorithmEmoji = '🎨 CLIP';
+    
+    if (algorithmName.includes('SigNet')) {
+        algorithmEmoji = '🧠 SigNet';
+    } else if (algorithmName === 'GNN') {
+        algorithmEmoji = '🕸️ GNN';
+    } else if (algorithmName === 'CLIP') {
+        algorithmEmoji = '🎨 CLIP';
+    }
+    
     document.getElementById('algorithmType').textContent = algorithmEmoji;
     
     // 显示相似度
     const similarity = result.similarity || result.final_score;
     document.getElementById('similarityScore').textContent = (similarity * 100).toFixed(1) + '%';
     
-    // 显示欧氏距离(仅SigNet)
-    const euclideanDist = result.euclidean_distance;
+    // 显示欧氏距离(SigNet/GNN)
+    const euclideanDist = result.euclidean_distance || result.gnn_distance;
     if (euclideanDist !== null && euclideanDist !== undefined) {
         document.getElementById('euclideanDistance').textContent = euclideanDist.toFixed(4);
     } else {
         document.getElementById('euclideanDistance').textContent = 'N/A';
+    }
+    
+    // 显示GNN关键点信息(如果使用GNN)
+    if (algorithmName === 'GNN' && result.gnn_keypoints_template) {
+        const kpInfo = `关键点: T=${result.gnn_keypoints_template}, Q=${result.gnn_keypoints_query}`;
+        document.getElementById('euclideanDistance').textContent += ` (${kpInfo})`;
     }
     
     // 显示处理时间
@@ -533,12 +581,12 @@ function displayResult(result) {
     // 显示清洁后的图片（仅签名验证且启用了清洁）
     const cleanedComparison = document.getElementById('cleanedComparison');
     if (result.type === 'signature' && result.debug_images && result.clean_enabled) {
-        const backendUrl = 'http://localhost:8000';
         const templatePath = result.debug_images.template;
         const queryPath = result.debug_images.query;
         
-        document.getElementById('templateCleanedImage').src = `${backendUrl}/uploaded_samples/${templatePath}`;
-        document.getElementById('queryCleanedImage').src = `${backendUrl}/uploaded_samples/${queryPath}`;
+        // 使用相对路径,支持单容器部署
+        document.getElementById('templateCleanedImage').src = `/uploaded_samples/${templatePath}`;
+        document.getElementById('queryCleanedImage').src = `/uploaded_samples/${queryPath}`;
         document.getElementById('cleanModeInfo').textContent = result.clean_mode || 'conservative';
         
         cleanedComparison.style.display = 'block';

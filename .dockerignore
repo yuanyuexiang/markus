@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# 虚拟环境
+venv/
+env/
+ENV/
+
+# 日志文件
+*.log
+backend.log
+frontend.log
+
+# 上传的文件和模型缓存
+backend/uploads/
+backend/models/
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+
+# 测试文件
+test_*.sh
+test_*.py
+test_*.png
+*.png
+training_curves.png
+
+# 其他
+.superdesign/

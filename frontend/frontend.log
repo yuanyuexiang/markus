@@ -1,10 +1,4 @@
-::1 - - [29/Oct/2025 14:18:01] "GET / HTTP/1.1" 200 -
-::1 - - [29/Oct/2025 14:18:01] "GET /app.js?v=3.0 HTTP/1.1" 200 -
-::1 - - [29/Oct/2025 14:18:10] code 404, message File not found
-::1 - - [29/Oct/2025 14:18:10] "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 -
-::1 - - [29/Oct/2025 14:18:26] "GET / HTTP/1.1" 200 -
-::1 - - [29/Oct/2025 14:18:26] code 404, message File not found
-::1 - - [29/Oct/2025 14:18:26] "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 -
-::1 - - [29/Oct/2025 14:18:26] "GET /app.js?v=3.0 HTTP/1.1" 200 -
-::1 - - [29/Oct/2025 14:18:27] code 404, message File not found
-::1 - - [29/Oct/2025 14:18:27] "GET /favicon.ico HTTP/1.1" 404 -
+::1 - - [02/Nov/2025 15:24:31] "GET / HTTP/1.1" 304 -
+::1 - - [02/Nov/2025 15:24:31] "GET /app.js?v=3.0 HTTP/1.1" 304 -
+::1 - - [02/Nov/2025 15:24:33] code 404, message File not found
+::1 - - [02/Nov/2025 15:24:33] "GET /favicon.ico HTTP/1.1" 404 -

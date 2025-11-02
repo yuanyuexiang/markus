@@ -1,143 +1,15 @@
-INFO:     Started server process [2754]
+INFO:     Started server process [81935]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-2025-10-29 14:17:25.828180: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
-To enable the following instructions: AVX2 FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
-WARNING:tensorflow:From /Users/yuanyuexiang/Desktop/workspace/markus/backend/venv/lib/python3.12/site-packages/tensorflow/python/compat/v2_compat.py:98: disable_resource_variables (from tensorflow.python.ops.resource_variables_toggle) is deprecated and will be removed in a future version.
-Instructions for updating:
-non-resource variables are not supported in the long term
-2025-10-29 14:17:32.494122: I tensorflow/compiler/mlir/mlir_graph_optimization_pass.cc:388] MLIR V1 optimization pass is not enabled
 🔄 正在加载CLIP模型...
 ✅ CLIP模型加载完成
+✅ 前端静态文件已挂载: /Users/yuanyuexiang/Desktop/workspace/markus/backend/../frontend
 🚀 启动服务器: http://localhost:8000
 📖 API文档: http://localhost:8000/docs
-💾 已保存样本: uploaded_samples/signature_template_20251029_141719.png, uploaded_samples/signature_query_20251029_141719.png
-📦 正在加载SigNet模型...
-✅ SigNet模型加载成功! 输入尺寸: (150, 220)
-✅ SigNet签名验证模型加载完成
-✅ 已保存清洁图片: uploaded_samples/debug/template_cleaned_20251029_141733.png ((222, 328))
-✅ 已保存清洁图片: uploaded_samples/debug/query_cleaned_20251029_141733.png ((221, 367))
-
-============================================================
-🔍 验证类型: signature
-🤖 使用算法: SigNet[classical+clean(conservative)]
-🎯 相似度: 0.5027
-📏 欧氏距离: 6.2363
-🧮 SSIM: 0.5292
-阈值: 0.9200
-============================================================
-
-INFO:     127.0.0.1:54283 - "POST /api/verify HTTP/1.1" 200 OK
-💾 已保存样本: uploaded_samples/signature_template_20251029_141954.png, uploaded_samples/signature_query_20251029_141954.png
-✅ 已保存清洁图片: uploaded_samples/debug/template_cleaned_20251029_141954.png ((214, 342))
-✅ 已保存清洁图片: uploaded_samples/debug/query_cleaned_20251029_141954.png ((211, 382))
-
-============================================================
-🔍 验证类型: signature
-🤖 使用算法: SigNet[classical+clean(conservative)]
-🎯 相似度: 0.5144
-📏 欧氏距离: 6.1907
-🧮 SSIM: 0.5415
-阈值: 0.9200
-============================================================
-
-INFO:     127.0.0.1:55003 - "POST /api/verify HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55003 - "GET /debug/template_cleaned_20251029_141954.png HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55005 - "GET /debug/query_cleaned_20251029_141954.png HTTP/1.1" 200 OK
-💾 已保存样本: uploaded_samples/signature_template_20251029_142510.png, uploaded_samples/signature_query_20251029_142510.png
-✅ 已保存清洁图片: uploaded_samples/debug/template_cleaned_20251029_142511.png ((341, 555))
-✅ 已保存清洁图片: uploaded_samples/debug/query_cleaned_20251029_142511.png ((327, 562))
-
-============================================================
-🔍 验证类型: signature
-🤖 使用算法: SigNet[classical+clean(conservative)]
-🎯 相似度: 1.0000
-📏 欧氏距离: 0.0000
-🧮 SSIM: 0.8420
-阈值: 0.9200
-============================================================
-
-INFO:     127.0.0.1:55836 - "POST /api/verify HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55836 - "GET /debug/template_cleaned_20251029_142511.png HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55840 - "GET /debug/query_cleaned_20251029_142511.png HTTP/1.1" 200 OK
-💾 已保存样本: uploaded_samples/signature_template_20251029_144718.png, uploaded_samples/signature_query_20251029_144718.png
-✅ 已保存清洁图片: uploaded_samples/debug/template_cleaned_20251029_144718.png ((259, 454))
-✅ 已保存清洁图片: uploaded_samples/debug/query_cleaned_20251029_144718.png ((327, 562))
-
-============================================================
-🔍 验证类型: signature
-🤖 使用算法: SigNet[classical+clean(conservative)]
-🎯 相似度: 0.5841
-📏 欧氏距离: 23.9349
-🧮 SSIM: 0.6148
-阈值: 0.9200
-============================================================
-
-INFO:     127.0.0.1:59176 - "POST /api/verify HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59176 - "GET /debug/template_cleaned_20251029_144718.png HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59178 - "GET /debug/query_cleaned_20251029_144718.png HTTP/1.1" 200 OK
-💾 已保存样本: uploaded_samples/signature_template_20251029_144748.png, uploaded_samples/signature_query_20251029_144748.png
-✅ 已保存清洁图片: uploaded_samples/debug/template_cleaned_20251029_144748.png ((259, 454))
-✅ 已保存清洁图片: uploaded_samples/debug/query_cleaned_20251029_144748.png ((267, 408))
-
-============================================================
-🔍 验证类型: signature
-🤖 使用算法: SigNet[classical+clean(conservative)]
-🎯 相似度: 0.5484
-📏 欧氏距离: 9.9039
-🧮 SSIM: 0.5772
-阈值: 0.9200
-============================================================
-
-INFO:     127.0.0.1:59252 - "POST /api/verify HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59252 - "GET /debug/template_cleaned_20251029_144748.png HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59254 - "GET /debug/query_cleaned_20251029_144748.png HTTP/1.1" 200 OK
-💾 已保存样本: uploaded_samples/signature_template_20251029_144826.png, uploaded_samples/signature_query_20251029_144826.png
-✅ 已保存清洁图片: uploaded_samples/debug/template_cleaned_20251029_144826.png ((259, 454))
-✅ 已保存清洁图片: uploaded_samples/debug/query_cleaned_20251029_144826.png ((223, 379))
-
-============================================================
-🔍 验证类型: signature
-🤖 使用算法: SigNet[classical+clean(conservative)]
-🎯 相似度: 0.5283
-📏 欧氏距离: 9.9039
-🧮 SSIM: 0.5561
-阈值: 0.9200
-============================================================
-
-INFO:     127.0.0.1:59347 - "POST /api/verify HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59347 - "GET /debug/template_cleaned_20251029_144826.png HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59349 - "GET /debug/query_cleaned_20251029_144826.png HTTP/1.1" 200 OK
-💾 已保存样本: uploaded_samples/signature_template_20251029_144840.png, uploaded_samples/signature_query_20251029_144840.png
-✅ 已保存清洁图片: uploaded_samples/debug/template_cleaned_20251029_144841.png ((234, 384))
-✅ 已保存清洁图片: uploaded_samples/debug/query_cleaned_20251029_144841.png ((223, 379))
-
-============================================================
-🔍 验证类型: signature
-🤖 使用算法: SigNet[classical+clean(conservative)]
-🎯 相似度: 1.0000
-📏 欧氏距离: 0.0000
-🧮 SSIM: 0.5615
-阈值: 0.9200
-============================================================
-
-INFO:     127.0.0.1:59385 - "POST /api/verify HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59385 - "GET /debug/template_cleaned_20251029_144841.png HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59392 - "GET /debug/query_cleaned_20251029_144841.png HTTP/1.1" 200 OK
-💾 已保存样本: uploaded_samples/signature_template_20251029_144902.png, uploaded_samples/signature_query_20251029_144902.png
-✅ 已保存清洁图片: uploaded_samples/debug/template_cleaned_20251029_144902.png ((234, 384))
-✅ 已保存清洁图片: uploaded_samples/debug/query_cleaned_20251029_144902.png ((264, 462))
-
-============================================================
-🔍 验证类型: signature
-🤖 使用算法: SigNet[classical+clean(conservative)]
-🎯 相似度: 0.5126
-📏 欧氏距离: 12.0134
-🧮 SSIM: 0.5396
-阈值: 0.9200
-============================================================
-
-INFO:     127.0.0.1:59445 - "POST /api/verify HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59445 - "GET /debug/template_cleaned_20251029_144902.png HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59447 - "GET /debug/query_cleaned_20251029_144902.png HTTP/1.1" 200 OK
+🎨 前端界面: http://localhost:8000
+INFO:     127.0.0.1:50269 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50297 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50349 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50349 - "GET /app.js?v=3.0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50513 - "GET / HTTP/1.1" 304 Not Modified

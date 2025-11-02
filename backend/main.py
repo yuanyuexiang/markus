@@ -30,6 +30,33 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# GNN验证器延迟加载
+gnn_verifier = None
+
+def load_gnn_verifier():
+    """延迟加载GNN验证器"""
+    global gnn_verifier
+    if gnn_verifier is not None:
+        return gnn_verifier
+    
+    try:
+        import sys
+        import os
+        # 添加backend目录到Python路径
+        backend_dir = os.path.dirname(os.path.abspath(__file__))
+        if backend_dir not in sys.path:
+            sys.path.insert(0, backend_dir)
+        
+        from gnn_verifier import get_gnn_verifier
+        gnn_verifier = get_gnn_verifier()
+        print("✅ GNN验证器加载完成")
+        return gnn_verifier
+    except Exception as e:
+        import traceback
+        print(f"⚠️ GNN验证器加载失败: {e}")
+        print(traceback.format_exc())
+        return None
+
 # 挂载静态文件服务，用于访问上传的样本和调试图片
 app.mount("/uploaded_samples", StaticFiles(directory="uploaded_samples"), name="uploaded_samples")
 
@@ -143,10 +170,6 @@ def compute_ssim_similarity(img1: np.ndarray, img2: np.ndarray) -> float:
         mse = np.mean((img1.astype(float) - img2.astype(float)) ** 2)
         similarity = 1.0 / (1.0 + mse / 1000.0)
         return float(similarity)
-
-@app.get("/")
-async def root():
-    return {"message": "签名图章验证系统 API", "status": "running"}
 
 def compute_signet_similarity(template_img, query_img, enable_clean=True, clean_mode='conservative'):
     """使用SigNet计算签名相似度，支持签名清洁功能
@@ -311,15 +334,20 @@ async def verify_signature(
     template_image: UploadFile = File(...),
     query_image: UploadFile = File(...),
     verification_type: str = Form(default="signature"),
+    algorithm: str = Form(default="signet"),  # 新增: signet, gnn, clip
     enable_clean: bool = Form(default=True),
     clean_mode: str = Form(default="conservative")
 ):
     """
     验证签名或图章的相似度
-    签名: SigNet专业模型
-    印章: CLIP模型
+    
+    算法选项:
+    - signet: SigNet专业模型(默认,适合签名)
+    - gnn: 图神经网络(基于关键点结构)
+    - clip: CLIP视觉模型(适合印章)
     
     参数:
+    - algorithm: 验证算法 ('signet', 'gnn', 'clip')
     - enable_clean: 是否启用签名清洁（去除杂质）
     - clean_mode: 清洁模式 'conservative'(中文签名) 或 'aggressive'(英文签名)
     """
@@ -342,13 +370,71 @@ async def verify_signature(
         query_img.save(query_path)
         print(f"💾 已保存样本: {template_path}, {query_path}")
         
-        # 根据类型选择算法
+        # 根据算法选择计算相似度
         algorithm_used = ""
         euclidean_distance = None
         result = None
+        gnn_info = {}
         
-        if verification_type == "signature":
-            # 签名用SigNet（支持清洁功能）
+        # 强制算法选择逻辑
+        if algorithm == "gnn":
+            # 使用GNN验证
+            print("🧠 使用GNN算法...")
+            gnn = load_gnn_verifier()
+            if gnn is not None and gnn.model is not None:
+                # 转为numpy数组
+                template_np = np.array(template_img)
+                query_np = np.array(query_img)
+                
+                # GNN自动使用签名清洁功能 (保守模式适合中文签名)
+                try:
+                    from preprocess.auto_crop import clean_signature_with_morph
+                    # 清洁图片去除噪声
+                    template_cleaned = clean_signature_with_morph(template_np, mode='conservative')
+                    query_cleaned = clean_signature_with_morph(query_np, mode='conservative')
+                    # 反转 (清洁后是前景255,需要转成背景255)
+                    template_cleaned = cv2.bitwise_not(template_cleaned)
+                    query_cleaned = cv2.bitwise_not(query_cleaned)
+                    
+                    # 保存清洁后的图片用于调试
+                    debug_dir = os.path.join(save_dir, "debug")
+                    os.makedirs(debug_dir, exist_ok=True)
+                    template_clean_path = os.path.join(debug_dir, f"template_cleaned_{timestamp}.png")
+                    query_clean_path = os.path.join(debug_dir, f"query_cleaned_{timestamp}.png")
+                    cv2.imwrite(template_clean_path, template_cleaned)
+                    cv2.imwrite(query_clean_path, query_cleaned)
+                    print(f"✅ GNN已保存清洁图片: {template_clean_path}, {query_clean_path}")
+                    
+                    # 使用清洁后的图片进行GNN验证
+                    gnn_result = gnn.verify(template_cleaned, query_cleaned)
+                except Exception as clean_error:
+                    print(f"⚠️ 签名清洁失败,使用原始图片: {clean_error}")
+                    gnn_result = gnn.verify(template_np, query_np)
+                
+                if 'error' not in gnn_result:
+                    # GNN成功
+                    similarity = gnn_result['confidence']
+                    euclidean_distance = gnn_result['distance']
+                    gnn_info = {
+                        'keypoints_template': gnn_result['keypoints_template'],
+                        'keypoints_query': gnn_result['keypoints_query'],
+                        'gnn_distance': gnn_result['distance'],
+                        'gnn_threshold': gnn_result['threshold']
+                    }
+                    algorithm_used = "GNN"
+                    threshold = 0.5  # GNN使用confidence阈值
+                else:
+                    # GNN失败,回退到SigNet
+                    print(f"⚠️ GNN失败: {gnn_result['error']}, 回退到SigNet")
+                    algorithm = "signet"
+            else:
+                # GNN未加载,回退到SigNet
+                print("⚠️ GNN模型未加载, 回退到SigNet")
+                algorithm = "signet"
+        
+        if algorithm == "signet":
+            # 使用SigNet验证（支持清洁功能）
+            print("🔬 使用SigNet算法...")
             result = compute_signet_similarity(
                 template_img, 
                 query_img, 
@@ -362,7 +448,7 @@ async def verify_signature(
                 pipeline = result.get('pipeline', 'SigNet')
                 clean_info = f"+clean({clean_mode})" if result.get('clean_enabled') else ""
                 algorithm_used = f"SigNet[{pipeline}{clean_info}]"
-                threshold = 0.92  # SigNet阈值(需根据实际数据调整)
+                threshold = 0.92  # SigNet阈值
                 if signature_ssim is not None:
                     # SSIM为人工裁剪/轻微变形提供兜底
                     similarity = max(similarity, min(0.98, signature_ssim * 0.95))
@@ -371,11 +457,37 @@ async def verify_signature(
                 similarity = compute_clip_similarity(template_img, query_img)
                 algorithm_used = "CLIP(fallback)"
                 threshold = 0.85
-        else:
-            # 印章用CLIP
+        
+        elif algorithm == "clip":
+            # 使用CLIP验证
+            print("🎨 使用CLIP算法...")
             similarity = compute_clip_similarity(template_img, query_img)
             algorithm_used = "CLIP"
             threshold = 0.88 if verification_type == "seal" else 0.85
+        
+        # 如果还没有设置algorithm_used(说明上面的逻辑没有执行),使用默认
+        if not algorithm_used:
+            if verification_type == "signature":
+                result = compute_signet_similarity(
+                    template_img, 
+                    query_img, 
+                    enable_clean=enable_clean,
+                    clean_mode=clean_mode
+                )
+                if result is not None:
+                    similarity = result['similarity']
+                    euclidean_distance = result['distance']
+                    algorithm_used = "SigNet"
+                    threshold = 0.92
+                else:
+                    similarity = compute_clip_similarity(template_img, query_img)
+                    algorithm_used = "CLIP(fallback)"
+                    threshold = 0.85
+            else:
+                # 印章用CLIP
+                similarity = compute_clip_similarity(template_img, query_img)
+                algorithm_used = "CLIP"
+                threshold = 0.88
         
         # 打印调试信息
         print(f"\n{'='*60}")
@@ -386,7 +498,9 @@ async def verify_signature(
             print(f"📏 欧氏距离: {euclidean_distance:.4f}")
         if verification_type == "signature" and result is not None and result.get('ssim') is not None:
             print(f"🧮 SSIM: {result['ssim']:.4f}")
-        print(f"阈值: {threshold:.4f}")
+        if gnn_info:
+            print(f"🧠 GNN关键点: template={gnn_info['keypoints_template']}, query={gnn_info['keypoints_query']}")
+        print(f"📊 阈值: {threshold:.4f}")
         print(f"{'='*60}\n")
         
         # 使用计算出的相似度
@@ -429,7 +543,11 @@ async def verify_signature(
             'recommendation': recommendation,
             'processing_time_ms': round(processing_time * 1000, 2),
             'clean_enabled': enable_clean if verification_type == "signature" else None,
-            'clean_mode': clean_mode if verification_type == "signature" and enable_clean else None
+            'clean_mode': clean_mode if verification_type == "signature" and enable_clean else None,
+            # GNN特有信息
+            'gnn_keypoints_template': gnn_info.get('keypoints_template') if gnn_info else None,
+            'gnn_keypoints_query': gnn_info.get('keypoints_query') if gnn_info else None,
+            'gnn_distance': gnn_info.get('gnn_distance') if gnn_info else None
         }
         
         # 添加调试图像路径（如果有）
@@ -449,8 +567,18 @@ async def verify_signature(
             }
         )
 
+# 挂载前端静态文件 (用于单容器部署)
+# 注意: 静态文件路由必须放在最后,避免覆盖API路由
+frontend_path = os.path.join(os.path.dirname(__file__), "..", "frontend")
+if os.path.exists(frontend_path):
+    app.mount("/", StaticFiles(directory=frontend_path, html=True), name="static")
+    print(f"✅ 前端静态文件已挂载: {frontend_path}")
+else:
+    print(f"⚠️ 前端目录不存在: {frontend_path}")
+
 if __name__ == "__main__":
     import uvicorn
     print("🚀 启动服务器: http://localhost:8000")
     print("📖 API文档: http://localhost:8000/docs")
+    print("🎨 前端界面: http://localhost:8000")
     uvicorn.run(app, host="0.0.0.0", port=8000)
