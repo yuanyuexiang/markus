@@ -8,8 +8,8 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # 配置 apt 使用国内镜像源 (加速软件包下载)
-RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources || \
-    sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list
+#RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources || \
+#    sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list
 
 # 安装系统依赖 (OpenCV 和 Git 需要)
 RUN apt-get update 
