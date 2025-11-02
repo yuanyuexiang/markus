@@ -1,10 +1,26 @@
+# Web 框架
 fastapi==0.104.1
 uvicorn==0.24.0
 python-multipart==0.0.6
+
+# 图像处理
 pillow==10.1.0
-numpy<2.0.0
+opencv-contrib-python==4.10.0.84
+
+# 科学计算 (NumPy 版本必须 < 2.0 以兼容 PyTorch 2.2.2)
+numpy>=1.26.0,<2.0.0
+scipy>=1.11.0,<1.17.0
+scikit-image==0.25.2
+
+# 深度学习
 torch==2.2.2
+torchvision==0.17.2
+torch-geometric==2.7.0
+
+# CLIP 依赖
 ftfy==6.1.1
 regex==2023.10.3
 tqdm==4.66.1
+
+# CLIP 模型 (从 GitHub 安装)
 git+https://github.com/openai/CLIP.git
