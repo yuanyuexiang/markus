@@ -375,6 +375,41 @@ async def verify_signature(
         query_img.save(query_path)
         print(f"💾 已保存样本: {template_path}, {query_path}")
         
+        # ✅ 笔画特征快速筛选 (方案D)
+        from stroke_analyzer import quick_signature_check
+        template_np = np.array(template_img)
+        query_np = np.array(query_img)
+        
+        stroke_check = quick_signature_check(template_np, query_np)
+        print(f"🔍 笔画特征检查: {stroke_check}")
+        
+        if stroke_check['should_reject']:
+            # 快速拒绝,不需要深度学习模型
+            processing_time = time.time() - start_time
+            result = {
+                "success": True,  # 添加success字段
+                "match": False,
+                "final_score": 0.0,  # 添加final_score字段
+                "confidence": "low",  # 置信度改为字符串
+                "algorithm": "笔画筛选器",
+                "algorithm_used": "stroke_filter",
+                "type": verification_type,  # 添加type字段
+                "verification_type": verification_type,
+                "template_path": template_path,
+                "query_path": query_path,
+                "fast_reject": True,
+                "reject_reason": stroke_check['reason'],
+                "stroke_features": {
+                    "template": stroke_check['template_features'],
+                    "query": stroke_check['query_features'],
+                    "differences": stroke_check['differences']
+                },
+                "processing_time_ms": round(processing_time * 1000, 2)
+            }
+            return result
+        
+        print("✅ 笔画特征检查通过,继续深度学习验证...")
+        
         # 根据算法选择计算相似度
         algorithm_used = ""
         euclidean_distance = None

@@ -502,13 +502,18 @@ document.getElementById('verifyBtn').addEventListener('click', async () => {
         
         document.getElementById('loading').style.display = 'none';
         
-        if (result.success) {
-            // 显示结果
-            displayResult(result);
-        } else {
-            // 显示错误
-            document.getElementById('error').textContent = '验证失败: ' + result.error;
+        // 检查响应状态
+        if (result.success === false) {
+            // 后端明确返回失败
+            document.getElementById('error').textContent = '验证失败: ' + (result.error || '未知错误');
             document.getElementById('error').style.display = 'block';
+        } else if (result.success === undefined && !result.final_score && !result.fast_reject) {
+            // 缺少关键字段,可能是错误响应
+            document.getElementById('error').textContent = '验证失败: 响应数据不完整 (请检查后端服务)';
+            document.getElementById('error').style.display = 'block';
+        } else {
+            // 正常结果或快速拒绝
+            displayResult(result);
         }
         
     } catch (error) {
@@ -524,6 +529,93 @@ document.getElementById('verifyBtn').addEventListener('click', async () => {
 function displayResult(result) {
     const resultSection = document.getElementById('resultSection');
     const scoreElement = document.getElementById('resultScore');
+    
+    // 🔥 检查是否快速拒绝
+    if (result.fast_reject) {
+        scoreElement.textContent = '0.0%';
+        scoreElement.className = 'result-score score-low';
+        
+        const typeName = result.type === 'signature' ? '手写签名' : '印章图章';
+        document.getElementById('resultType').textContent = `${typeName} · ⚡ 快速拒绝`;
+        document.getElementById('algorithmType').textContent = '⚡ 笔画筛选器';
+        document.getElementById('similarityScore').textContent = '0.0%';
+        document.getElementById('euclideanDistance').textContent = 'N/A';
+        document.getElementById('processingTime').textContent = result.processing_time_ms + 'ms';
+        
+        // 显示拒绝原因和特征差异
+        const recommendationElement = document.getElementById('recommendation');
+        const diffs = result.stroke_features.differences;
+        const template = result.stroke_features.template;
+        const query = result.stroke_features.query;
+        
+        recommendationElement.innerHTML = `
+            <div style="padding: 15px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px; margin-bottom: 15px;">
+                <strong>⚡ 快速拒绝原因:</strong> ${result.reject_reason}
+            </div>
+            
+            <strong>📊 笔画特征对比:</strong>
+            <table style="width: 100%; border-collapse: collapse; margin-top: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <thead>
+                    <tr style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                        <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">特征</th>
+                        <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">模板图片</th>
+                        <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">待验证图片</th>
+                        <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">差异程度</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="background: ${diffs.stroke_count_diff > 0.45 ? '#fee' : '#efe'};">
+                        <td style="padding: 10px; border: 1px solid #ddd;"><strong>笔画数量</strong></td>
+                        <td style="padding: 10px; text-align: center; border: 1px solid #ddd;">${template.stroke_count}</td>
+                        <td style="padding: 10px; text-align: center; border: 1px solid #ddd;">${query.stroke_count}</td>
+                        <td style="padding: 10px; text-align: center; border: 1px solid #ddd; font-weight: bold; color: ${diffs.stroke_count_diff > 0.45 ? '#dc3545' : '#28a745'}">
+                            ${(diffs.stroke_count_diff * 100).toFixed(1)}% ${diffs.stroke_count_diff > 0.45 ? '❌' : '✓'}
+                        </td>
+                    </tr>
+                    <tr style="background: ${diffs.density_diff > 0.50 ? '#fee' : '#efe'};">
+                        <td style="padding: 10px; border: 1px solid #ddd;"><strong>签名密度</strong></td>
+                        <td style="padding: 10px; text-align: center; border: 1px solid #ddd;">${(template.density * 100).toFixed(2)}%</td>
+                        <td style="padding: 10px; text-align: center; border: 1px solid #ddd;">${(query.density * 100).toFixed(2)}%</td>
+                        <td style="padding: 10px; text-align: center; border: 1px solid #ddd; font-weight: bold; color: ${diffs.density_diff > 0.50 ? '#dc3545' : '#28a745'}">
+                            ${(diffs.density_diff * 100).toFixed(1)}% ${diffs.density_diff > 0.50 ? '❌' : '✓'}
+                        </td>
+                    </tr>
+                    <tr style="background: ${diffs.aspect_ratio_diff > 0.50 ? '#fee' : '#efe'};">
+                        <td style="padding: 10px; border: 1px solid #ddd;"><strong>宽高比</strong></td>
+                        <td style="padding: 10px; text-align: center; border: 1px solid #ddd;">${template.aspect_ratio.toFixed(2)}</td>
+                        <td style="padding: 10px; text-align: center; border: 1px solid #ddd;">${query.aspect_ratio.toFixed(2)}</td>
+                        <td style="padding: 10px; text-align: center; border: 1px solid #ddd; font-weight: bold; color: ${diffs.aspect_ratio_diff > 0.50 ? '#dc3545' : '#28a745'}">
+                            ${(diffs.aspect_ratio_diff * 100).toFixed(1)}% ${diffs.aspect_ratio_diff > 0.50 ? '❌' : '✓'}
+                        </td>
+                    </tr>
+                    <tr style="background: ${diffs.bbox_area_diff > 0.60 ? '#fee' : '#efe'};">
+                        <td style="padding: 10px; border: 1px solid #ddd;"><strong>图片尺寸</strong></td>
+                        <td style="padding: 10px; text-align: center; border: 1px solid #ddd;">${template.bbox_area} 像素</td>
+                        <td style="padding: 10px; text-align: center; border: 1px solid #ddd;">${query.bbox_area} 像素</td>
+                        <td style="padding: 10px; text-align: center; border: 1px solid #ddd; font-weight: bold; color: ${diffs.bbox_area_diff > 0.60 ? '#dc3545' : '#28a745'}">
+                            ${(diffs.bbox_area_diff * 100).toFixed(1)}% ${diffs.bbox_area_diff > 0.60 ? '❌' : '✓'}
+                        </td>
+                    </tr>
+                    <tr style="background: #f8f9fa;">
+                        <td colspan="3" style="padding: 10px; border: 1px solid #ddd; text-align: right;"><strong>综合评分:</strong></td>
+                        <td style="padding: 10px; text-align: center; border: 1px solid #ddd; font-weight: bold; color: ${diffs.combined_score > 1.2 ? '#dc3545' : '#28a745'}; font-size: 1.1em;">
+                            ${diffs.combined_score.toFixed(2)} ${diffs.combined_score > 1.2 ? '(超过阈值)' : ''}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div style="margin-top: 15px; padding: 12px; background: #e7f3ff; border-left: 4px solid #2196F3; border-radius: 4px;">
+                <strong>💡 智能预筛选说明:</strong><br>
+                系统通过笔画特征快速分析发现两张图片差异明显,无需使用深度学习模型即可判定为不匹配。<br>
+                <span style="color: #666;">✓ 节省计算资源 &nbsp; ✓ 加快响应速度 &nbsp; ✓ 降低服务器负载</span>
+            </div>
+        `;
+        
+        document.getElementById('cleanedComparison').style.display = 'none';
+        resultSection.style.display = 'block';  // 修复: 直接设置display而不是移除hidden类
+        return;
+    }
     
     // 显示分数
     const scorePercent = (result.final_score * 100).toFixed(1);
