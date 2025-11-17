@@ -687,6 +687,7 @@ function displayResult(result) {
     }
     
     // 显示建议
+    /*
     const recommendationElement = document.getElementById('recommendation');
     recommendationElement.innerHTML = `
         <strong>💡 验证建议:</strong><br>
@@ -696,7 +697,7 @@ function displayResult(result) {
             (阈值: ${(result.threshold * 100).toFixed(0)}%)
         </small>
     `;
-    
+    */
     // 显示结果区域
     resultSection.style.display = 'block';
     
