@@ -686,18 +686,10 @@ function displayResult(result) {
         cleanedComparison.style.display = 'none';
     }
     
-    // 显示建议
-    /*
+    // 隐藏验证建议区域
     const recommendationElement = document.getElementById('recommendation');
-    recommendationElement.innerHTML = `
-        <strong>💡 验证建议:</strong><br>
-        ${result.recommendation}<br>
-        <small style="color: #666;">
-            判断结果: ${result.is_authentic ? '✅ 可能为真实' : '❌ 可能为伪造'} 
-            (阈值: ${(result.threshold * 100).toFixed(0)}%)
-        </small>
-    `;
-    */
+    recommendationElement.style.display = 'none';
+    
     // 显示结果区域
     resultSection.style.display = 'block';
     

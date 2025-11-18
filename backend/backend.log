@@ -1,4 +1,4 @@
-INFO:     Started server process [50208]
+INFO:     Started server process [74983]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
@@ -8,13 +8,69 @@ INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 🚀 启动服务器: http://localhost:8000
 📖 API文档: http://localhost:8000/docs
 🎨 前端界面: http://localhost:8000
-💾 已保存样本: uploaded_samples/signature_template_20251103_112115.png, uploaded_samples/signature_query_20251103_112115.png
-🔍 笔画特征检查: {'should_reject': True, 'reason': '笔画数量差异过大 (85.7%), 疑似不同人签名', 'template_features': {'stroke_count': 7, 'total_pixels': 8826, 'density': 0.08927054254157057, 'aspect_ratio': 1.806930693069307, 'bbox_area': 73730, 'avg_stroke_length': 270.2857142857143, 'stroke_thickness': 4.664904862579281, 'valid': True}, 'query_features': {'stroke_count': 1, 'total_pixels': 36, 'density': 0.0009104013352552917, 'aspect_ratio': 1.5, 'bbox_area': 54, 'avg_stroke_length': 14.0, 'stroke_thickness': 2.5714285714285716, 'valid': True}, 'differences': {'stroke_count_diff': 0.8571428571428571, 'density_diff': 0.9898017721262158, 'aspect_ratio_diff': 0.16986301369863016, 'bbox_area_diff': 0.999267597992676, 'stroke_length_diff': 0.9482029598308668, 'stroke_thickness_diff': 0.44877148684082735, 'valid': True, 'combined_score': 2.016807642967703}}
-INFO:     127.0.0.1:63372 - "POST /api/verify HTTP/1.1" 200 OK
-INFO:     127.0.0.1:63372 - "GET / HTTP/1.1" 200 OK
-INFO:     127.0.0.1:63372 - "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:63372 - "GET /app.js?v=3.0 HTTP/1.1" 200 OK
-💾 已保存样本: uploaded_samples/signature_template_20251103_112201.png, uploaded_samples/signature_query_20251103_112201.png
-🔍 笔画特征检查: {'should_reject': True, 'reason': '笔画数量差异过大 (78.1%), 疑似不同人签名', 'template_features': {'stroke_count': 7, 'total_pixels': 8826, 'density': 0.0995600676818951, 'aspect_ratio': 1.806930693069307, 'bbox_area': 73730, 'avg_stroke_length': 270.2857142857143, 'stroke_thickness': 4.664904862579281, 'valid': True}, 'query_features': {'stroke_count': 32, 'total_pixels': 32421, 'density': 0.5601803856520837, 'aspect_ratio': 2.378205128205128, 'bbox_area': 57876, 'avg_stroke_length': 127.125, 'stroke_thickness': 7.96976401179941, 'valid': True}, 'differences': {'stroke_count_diff': 0.78125, 'density_diff': 0.8222714142945202, 'aspect_ratio_diff': 0.24021243094659867, 'bbox_area_diff': 0.21502780415027803, 'stroke_length_diff': 0.5296643763213531, 'stroke_thickness_diff': 0.41467465590288655, 'valid': True, 'combined_score': 1.843733845241119}}
-INFO:     127.0.0.1:63391 - "POST /api/verify HTTP/1.1" 200 OK
-bash: line 1: 50208 Killed: 9               python main.py
+INFO:     127.0.0.1:59992 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59992 - "GET /app.js?v=3.0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59992 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:59992 - "GET /app.js?v=3.0 HTTP/1.1" 304 Not Modified
+💾 已保存样本: uploaded_samples/signature_template_20251118_141713.png, uploaded_samples/signature_query_20251118_141713.png
+🔍 笔画特征检查: {'should_reject': False, 'reason': '', 'template_features': {'stroke_count': 8, 'total_pixels': 8640, 'density': 0.10919431279620853, 'aspect_ratio': 1.806930693069307, 'bbox_area': 73730, 'avg_stroke_length': 232.25, 'stroke_thickness': 4.65016146393972, 'valid': True}, 'query_features': {'stroke_count': 7, 'total_pixels': 8822, 'density': 0.10878465029101313, 'aspect_ratio': 1.797029702970297, 'bbox_area': 73326, 'avg_stroke_length': 276.42857142857144, 'stroke_thickness': 4.559173126614987, 'valid': True}, 'differences': {'stroke_count_diff': 0.125, 'density_diff': 0.0037516835328224975, 'aspect_ratio_diff': 0.005479452054794525, 'bbox_area_diff': 0.005479452054794521, 'stroke_length_diff': 0.15981912144702848, 'stroke_thickness_diff': 0.01956670494784186, 'valid': True, 'combined_score': 0.134231135587617}}
+✅ 笔画特征检查通过,继续深度学习验证...
+🧠 使用GNN算法...
+✓ GNN模型已加载: signature_gnn_model.pth
+✅ GNN验证器加载完成
+✅ GNN已保存清洁图片: uploaded_samples/debug/template_cleaned_20251118_141713.png, uploaded_samples/debug/query_cleaned_20251118_141713.png
+
+============================================================
+🔍 验证类型: signature
+🤖 使用算法: GNN
+🎯 相似度: 0.9566
+📏 欧氏距离: 0.0434
+🧠 GNN关键点: template=4041, query=4099
+📊 阈值: 0.5000
+============================================================
+
+INFO:     127.0.0.1:59994 - "POST /api/verify HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63730 - "GET / HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:63730 - "GET /app.js?v=3.0 HTTP/1.1" 200 OK
+💾 已保存样本: uploaded_samples/signature_template_20251118_142747.png, uploaded_samples/signature_query_20251118_142747.png
+🔍 笔画特征检查: {'should_reject': True, 'reason': '笔画数量差异过大 (83.3%), 疑似不同人签名', 'template_features': {'stroke_count': 2, 'total_pixels': 2900, 'density': 0.08489212845057229, 'aspect_ratio': 1.147239263803681, 'bbox_area': 30481, 'avg_stroke_length': 287.0, 'stroke_thickness': 5.052264808362369, 'valid': True}, 'query_features': {'stroke_count': 12, 'total_pixels': 7219, 'density': 0.29884914720980293, 'aspect_ratio': 2.4646464646464645, 'bbox_area': 24156, 'avg_stroke_length': 109.83333333333333, 'stroke_thickness': 5.477238239757208, 'valid': True}, 'differences': {'stroke_count_diff': 0.8333333333333334, 'density_diff': 0.7159365210067843, 'aspect_ratio_diff': 0.5345217741124408, 'bbox_area_diff': 0.20750631540959943, 'stroke_length_diff': 0.6173054587688734, 'stroke_thickness_diff': 0.07758899883341144, 'valid': True, 'combined_score': 2.083791628452558}}
+INFO:     127.0.0.1:63911 - "POST /api/verify HTTP/1.1" 200 OK
+💾 已保存样本: uploaded_samples/signature_template_20251118_142932.png, uploaded_samples/signature_query_20251118_142932.png
+🔍 笔画特征检查: {'should_reject': True, 'reason': '签名密度差异过大 (60.9%), 疑似不同人签名', 'template_features': {'stroke_count': 2, 'total_pixels': 2900, 'density': 0.08489212845057229, 'aspect_ratio': 1.147239263803681, 'bbox_area': 30481, 'avg_stroke_length': 287.0, 'stroke_thickness': 5.052264808362369, 'valid': True}, 'query_features': {'stroke_count': 2, 'total_pixels': 2722, 'density': 0.2173427020121367, 'aspect_ratio': 1.2658227848101267, 'bbox_area': 7900, 'avg_stroke_length': 284.5, 'stroke_thickness': 4.783831282952549, 'valid': True}, 'differences': {'stroke_count_diff': 0.0, 'density_diff': 0.609408884380982, 'aspect_ratio_diff': 0.09368098159509206, 'bbox_area_diff': 0.7408221515042157, 'stroke_length_diff': 0.008710801393728223, 'stroke_thickness_diff': 0.05313132537421964, 'valid': True, 'combined_score': 0.703089865976074}}
+INFO:     127.0.0.1:64186 - "POST /api/verify HTTP/1.1" 200 OK
+💾 已保存样本: uploaded_samples/signature_template_20251118_143026.png, uploaded_samples/signature_query_20251118_143026.png
+🔍 笔画特征检查: {'should_reject': False, 'reason': '', 'template_features': {'stroke_count': 2, 'total_pixels': 2734, 'density': 0.22343903236351748, 'aspect_ratio': 1.4936708860759493, 'bbox_area': 9322, 'avg_stroke_length': 287.5, 'stroke_thickness': 4.754782608695653, 'valid': True}, 'query_features': {'stroke_count': 2, 'total_pixels': 2722, 'density': 0.2173427020121367, 'aspect_ratio': 1.2658227848101267, 'bbox_area': 7900, 'avg_stroke_length': 284.5, 'stroke_thickness': 4.783831282952549, 'valid': True}, 'differences': {'stroke_count_diff': 0.0, 'density_diff': 0.027284088580649266, 'aspect_ratio_diff': 0.15254237288135586, 'bbox_area_diff': 0.15254237288135594, 'stroke_length_diff': 0.010434782608695653, 'stroke_thickness_diff': 0.006072261444589954, 'valid': True, 'combined_score': 0.17982646146200512}}
+✅ 笔画特征检查通过,继续深度学习验证...
+🧠 使用GNN算法...
+✅ GNN已保存清洁图片: uploaded_samples/debug/template_cleaned_20251118_143026.png, uploaded_samples/debug/query_cleaned_20251118_143026.png
+
+============================================================
+🔍 验证类型: signature
+🤖 使用算法: GNN
+🎯 相似度: 0.9156
+📏 欧氏距离: 0.0844
+🧠 GNN关键点: template=1116, query=1116
+📊 阈值: 0.5000
+============================================================
+
+INFO:     127.0.0.1:64327 - "POST /api/verify HTTP/1.1" 200 OK
+💾 已保存样本: uploaded_samples/signature_template_20251118_143238.png, uploaded_samples/signature_query_20251118_143238.png
+🔍 笔画特征检查: {'should_reject': True, 'reason': '笔画数量差异过大 (66.7%), 疑似不同人签名', 'template_features': {'stroke_count': 6, 'total_pixels': 7552, 'density': 0.14024922465504114, 'aspect_ratio': 1.4696132596685083, 'bbox_area': 48146, 'avg_stroke_length': 237.66666666666666, 'stroke_thickness': 5.295932678821879, 'valid': True}, 'query_features': {'stroke_count': 2, 'total_pixels': 7485, 'density': 0.1572379892023612, 'aspect_ratio': 1.485207100591716, 'bbox_area': 42419, 'avg_stroke_length': 722.0, 'stroke_thickness': 5.183518005540166, 'valid': True}, 'differences': {'stroke_count_diff': 0.6666666666666666, 'density_diff': 0.10804491098811986, 'aspect_ratio_diff': 0.0104994387092514, 'bbox_area_diff': 0.11895069164624268, 'stroke_length_diff': 0.6708217913204063, 'stroke_thickness_diff': 0.021226605415747238, 'valid': True, 'combined_score': 0.7852110163640379}}
+INFO:     127.0.0.1:64689 - "POST /api/verify HTTP/1.1" 200 OK
+💾 已保存样本: uploaded_samples/signature_template_20251118_143242.png, uploaded_samples/signature_query_20251118_143242.png
+🔍 笔画特征检查: {'should_reject': True, 'reason': '笔画数量差异过大 (66.7%), 疑似不同人签名', 'template_features': {'stroke_count': 6, 'total_pixels': 7552, 'density': 0.14024922465504114, 'aspect_ratio': 1.4696132596685083, 'bbox_area': 48146, 'avg_stroke_length': 237.66666666666666, 'stroke_thickness': 5.295932678821879, 'valid': True}, 'query_features': {'stroke_count': 2, 'total_pixels': 7485, 'density': 0.1572379892023612, 'aspect_ratio': 1.485207100591716, 'bbox_area': 42419, 'avg_stroke_length': 722.0, 'stroke_thickness': 5.183518005540166, 'valid': True}, 'differences': {'stroke_count_diff': 0.6666666666666666, 'density_diff': 0.10804491098811986, 'aspect_ratio_diff': 0.0104994387092514, 'bbox_area_diff': 0.11895069164624268, 'stroke_length_diff': 0.6708217913204063, 'stroke_thickness_diff': 0.021226605415747238, 'valid': True, 'combined_score': 0.7852110163640379}}
+INFO:     127.0.0.1:64689 - "POST /api/verify HTTP/1.1" 200 OK
+💾 已保存样本: uploaded_samples/signature_template_20251118_143243.png, uploaded_samples/signature_query_20251118_143243.png
+🔍 笔画特征检查: {'should_reject': True, 'reason': '笔画数量差异过大 (66.7%), 疑似不同人签名', 'template_features': {'stroke_count': 6, 'total_pixels': 7552, 'density': 0.14024922465504114, 'aspect_ratio': 1.4696132596685083, 'bbox_area': 48146, 'avg_stroke_length': 237.66666666666666, 'stroke_thickness': 5.295932678821879, 'valid': True}, 'query_features': {'stroke_count': 2, 'total_pixels': 7485, 'density': 0.1572379892023612, 'aspect_ratio': 1.485207100591716, 'bbox_area': 42419, 'avg_stroke_length': 722.0, 'stroke_thickness': 5.183518005540166, 'valid': True}, 'differences': {'stroke_count_diff': 0.6666666666666666, 'density_diff': 0.10804491098811986, 'aspect_ratio_diff': 0.0104994387092514, 'bbox_area_diff': 0.11895069164624268, 'stroke_length_diff': 0.6708217913204063, 'stroke_thickness_diff': 0.021226605415747238, 'valid': True, 'combined_score': 0.7852110163640379}}
+INFO:     127.0.0.1:64689 - "POST /api/verify HTTP/1.1" 200 OK
+💾 已保存样本: uploaded_samples/signature_template_20251118_143244.png, uploaded_samples/signature_query_20251118_143244.png
+🔍 笔画特征检查: {'should_reject': True, 'reason': '笔画数量差异过大 (66.7%), 疑似不同人签名', 'template_features': {'stroke_count': 6, 'total_pixels': 7552, 'density': 0.14024922465504114, 'aspect_ratio': 1.4696132596685083, 'bbox_area': 48146, 'avg_stroke_length': 237.66666666666666, 'stroke_thickness': 5.295932678821879, 'valid': True}, 'query_features': {'stroke_count': 2, 'total_pixels': 7485, 'density': 0.1572379892023612, 'aspect_ratio': 1.485207100591716, 'bbox_area': 42419, 'avg_stroke_length': 722.0, 'stroke_thickness': 5.183518005540166, 'valid': True}, 'differences': {'stroke_count_diff': 0.6666666666666666, 'density_diff': 0.10804491098811986, 'aspect_ratio_diff': 0.0104994387092514, 'bbox_area_diff': 0.11895069164624268, 'stroke_length_diff': 0.6708217913204063, 'stroke_thickness_diff': 0.021226605415747238, 'valid': True, 'combined_score': 0.7852110163640379}}
+INFO:     127.0.0.1:64689 - "POST /api/verify HTTP/1.1" 200 OK
+💾 已保存样本: uploaded_samples/signature_template_20251118_143418.png, uploaded_samples/signature_query_20251118_143418.png
+🔍 笔画特征检查: {'should_reject': True, 'reason': '笔画数量差异过大 (66.7%), 疑似不同人签名', 'template_features': {'stroke_count': 6, 'total_pixels': 7552, 'density': 0.14024922465504114, 'aspect_ratio': 1.4696132596685083, 'bbox_area': 48146, 'avg_stroke_length': 237.66666666666666, 'stroke_thickness': 5.295932678821879, 'valid': True}, 'query_features': {'stroke_count': 2, 'total_pixels': 7485, 'density': 0.1572379892023612, 'aspect_ratio': 1.485207100591716, 'bbox_area': 42419, 'avg_stroke_length': 722.0, 'stroke_thickness': 5.183518005540166, 'valid': True}, 'differences': {'stroke_count_diff': 0.6666666666666666, 'density_diff': 0.10804491098811986, 'aspect_ratio_diff': 0.0104994387092514, 'bbox_area_diff': 0.11895069164624268, 'stroke_length_diff': 0.6708217913204063, 'stroke_thickness_diff': 0.021226605415747238, 'valid': True, 'combined_score': 0.7852110163640379}}
+INFO:     127.0.0.1:64960 - "POST /api/verify HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64960 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64960 - "GET /app.js?v=3.0 HTTP/1.1" 304 Not Modified
+💾 已保存样本: uploaded_samples/signature_template_20251118_143542.png, uploaded_samples/signature_query_20251118_143542.png
+🔍 笔画特征检查: {'should_reject': True, 'reason': '笔画数量差异过大 (66.7%), 疑似不同人签名', 'template_features': {'stroke_count': 6, 'total_pixels': 7733, 'density': 0.13634840871021775, 'aspect_ratio': 1.4456521739130435, 'bbox_area': 48944, 'avg_stroke_length': 240.33333333333334, 'stroke_thickness': 5.362690707350901, 'valid': True}, 'query_features': {'stroke_count': 2, 'total_pixels': 7482, 'density': 0.15482028679620088, 'aspect_ratio': 1.494047619047619, 'bbox_area': 42168, 'avg_stroke_length': 721.5, 'stroke_thickness': 5.185031185031185, 'valid': True}, 'differences': {'stroke_count_diff': 0.6666666666666666, 'density_diff': 0.1193117418151974, 'aspect_ratio_diff': 0.03239217044864025, 'bbox_area_diff': 0.13844393592677345, 'stroke_length_diff': 0.6668976668976668, 'stroke_thickness_diff': 0.03312880268783526, 'valid': True, 'combined_score': 0.8183705789305044}}
+INFO:     127.0.0.1:65212 - "POST /api/verify HTTP/1.1" 200 OK
