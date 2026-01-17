@@ -74,3 +74,20 @@ INFO:     127.0.0.1:64960 - "GET /app.js?v=3.0 HTTP/1.1" 304 Not Modified
 💾 已保存样本: uploaded_samples/signature_template_20251118_143542.png, uploaded_samples/signature_query_20251118_143542.png
 🔍 笔画特征检查: {'should_reject': True, 'reason': '笔画数量差异过大 (66.7%), 疑似不同人签名', 'template_features': {'stroke_count': 6, 'total_pixels': 7733, 'density': 0.13634840871021775, 'aspect_ratio': 1.4456521739130435, 'bbox_area': 48944, 'avg_stroke_length': 240.33333333333334, 'stroke_thickness': 5.362690707350901, 'valid': True}, 'query_features': {'stroke_count': 2, 'total_pixels': 7482, 'density': 0.15482028679620088, 'aspect_ratio': 1.494047619047619, 'bbox_area': 42168, 'avg_stroke_length': 721.5, 'stroke_thickness': 5.185031185031185, 'valid': True}, 'differences': {'stroke_count_diff': 0.6666666666666666, 'density_diff': 0.1193117418151974, 'aspect_ratio_diff': 0.03239217044864025, 'bbox_area_diff': 0.13844393592677345, 'stroke_length_diff': 0.6668976668976668, 'stroke_thickness_diff': 0.03312880268783526, 'valid': True, 'combined_score': 0.8183705789305044}}
 INFO:     127.0.0.1:65212 - "POST /api/verify HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62836 - "OPTIONS /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62836 - "POST /api/auth/login HTTP/1.1" 405 Method Not Allowed
+INFO:     127.0.0.1:62836 - "POST /api/auth/login HTTP/1.1" 405 Method Not Allowed
+INFO:     127.0.0.1:62836 - "POST /api/auth/login HTTP/1.1" 405 Method Not Allowed
+INFO:     127.0.0.1:62836 - "POST /api/auth/login HTTP/1.1" 405 Method Not Allowed
+INFO:     127.0.0.1:62836 - "POST /api/auth/login HTTP/1.1" 405 Method Not Allowed
+INFO:     127.0.0.1:62836 - "POST /api/auth/login HTTP/1.1" 405 Method Not Allowed
+INFO:     127.0.0.1:62836 - "POST /api/auth/login HTTP/1.1" 405 Method Not Allowed
+INFO:     127.0.0.1:62836 - "POST /api/auth/login HTTP/1.1" 405 Method Not Allowed
+INFO:     127.0.0.1:62836 - "POST /api/auth/login HTTP/1.1" 405 Method Not Allowed
+INFO:     127.0.0.1:62924 - "OPTIONS /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62924 - "POST /api/auth/login HTTP/1.1" 405 Method Not Allowed
+INFO:     127.0.0.1:62924 - "OPTIONS /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62924 - "POST /api/auth/login HTTP/1.1" 405 Method Not Allowed
+INFO:     127.0.0.1:62924 - "OPTIONS /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62924 - "POST /api/auth/login HTTP/1.1" 405 Method Not Allowed
+bash: line 1: 74983 Killed: 9               python main.py

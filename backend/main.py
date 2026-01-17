@@ -19,6 +19,19 @@ import time
 import os
 from datetime import datetime
 
+
+def _open_image_as_grayscale(upload_bytes: bytes) -> Image.Image:
+    """Open an uploaded image and convert it to grayscale on a white background.
+
+    This avoids transparency (RGBA) being treated as black when converting to 'L',
+    which can heavily distort signature/seal similarity.
+    """
+    img = Image.open(io.BytesIO(upload_bytes))
+    if img.mode in ("RGBA", "LA"):
+        background = Image.new("RGBA", img.size, (255, 255, 255, 255))
+        img = Image.alpha_composite(background, img.convert("RGBA")).convert("RGB")
+    return img.convert("L")
+
 app = FastAPI(title="签名图章验证系统")
 
 # 允许跨域
@@ -359,9 +372,9 @@ async def verify_signature(
     start_time = time.time()
 
     try:
-        # 读取图片并直接转为灰度L
-        template_img = Image.open(io.BytesIO(await template_image.read())).convert('L')
-        query_img = Image.open(io.BytesIO(await query_image.read())).convert('L')
+        # 读取图片并转为灰度L（透明背景会先铺白）
+        template_img = _open_image_as_grayscale(await template_image.read())
+        query_img = _open_image_as_grayscale(await query_image.read())
 
         # 🔥 保存用户上传的真实裁剪图片
         save_dir = "uploaded_samples"

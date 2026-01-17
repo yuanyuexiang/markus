@@ -1,7 +1,7 @@
 // 全局状态
 const state = {
     verificationType: 'signature',
-    algorithm: 'gnn',  // 默认使用GNN算法
+    algorithm: 'signet',  // 默认使用SigNet算法(更适合签名)
     templateImage: null,
     queryImage: null,
     templateCropped: null,
@@ -200,45 +200,48 @@ class CanvasManager {
     cropImage() {
         if (!this.selection || !this.image) return null;
         
-        // 重要：坐标需要除以scale，因为selection存储的是画布坐标，需要转换为原图坐标
-        const scaleInverse = 1 / this.scale;
-        
         if (this.selection.tool === 'rectangle') {
-            const x = Math.min(this.selection.startX, this.selection.endX) * scaleInverse;
-            const y = Math.min(this.selection.startY, this.selection.endY) * scaleInverse;
-            const width = Math.abs(this.selection.endX - this.selection.startX) * scaleInverse;
-            const height = Math.abs(this.selection.endY - this.selection.startY) * scaleInverse;
+            // selection 坐标在 handleMouseDown/Move/Up 时已经除以 scale，存储的就是原图坐标
+            const x = Math.min(this.selection.startX, this.selection.endX);
+            const y = Math.min(this.selection.startY, this.selection.endY);
+            const width = Math.abs(this.selection.endX - this.selection.startX);
+            const height = Math.abs(this.selection.endY - this.selection.startY);
+
+            const w = Math.max(1, Math.round(width));
+            const h = Math.max(1, Math.round(height));
             
             // 创建临时canvas裁剪
             const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = width;
-            tempCanvas.height = height;
+            tempCanvas.width = w;
+            tempCanvas.height = h;
             const tempCtx = tempCanvas.getContext('2d');
-            tempCtx.drawImage(this.image, x, y, width, height, 0, 0, width, height);
+            tempCtx.drawImage(this.image, x, y, w, h, 0, 0, w, h);
             
             return tempCanvas.toDataURL('image/png');
         } else if (this.selection.tool === 'circle') {
-            const centerX = this.selection.startX * scaleInverse;
-            const centerY = this.selection.startY * scaleInverse;
+            const centerX = this.selection.startX;
+            const centerY = this.selection.startY;
             const radius = Math.sqrt(
-                Math.pow((this.selection.endX - this.selection.startX) * scaleInverse, 2) + 
-                Math.pow((this.selection.endY - this.selection.startY) * scaleInverse, 2)
+                Math.pow((this.selection.endX - this.selection.startX), 2) + 
+                Math.pow((this.selection.endY - this.selection.startY), 2)
             );
+
+            const r = Math.max(1, Math.round(radius));
             
             // 创建临时canvas裁剪圆形
             const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = radius * 2;
-            tempCanvas.height = radius * 2;
+            tempCanvas.width = r * 2;
+            tempCanvas.height = r * 2;
             const tempCtx = tempCanvas.getContext('2d');
             
             tempCtx.beginPath();
-            tempCtx.arc(radius, radius, radius, 0, 2 * Math.PI);
+            tempCtx.arc(r, r, r, 0, 2 * Math.PI);
             tempCtx.clip();
             
             tempCtx.drawImage(
                 this.image, 
-                centerX - radius, centerY - radius, radius * 2, radius * 2,
-                0, 0, radius * 2, radius * 2
+                centerX - r, centerY - r, r * 2, r * 2,
+                0, 0, r * 2, r * 2
             );
             
             return tempCanvas.toDataURL('image/png');
