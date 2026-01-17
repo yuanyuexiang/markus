@@ -317,17 +317,25 @@ const algorithmSelect = document.getElementById('algorithmSelect');
 const algorithmDesc = document.getElementById('algorithmDesc');
 
 if (algorithmSelect) {
+    // 初始化下拉框显示，确保 UI 与 state.algorithm 一致
+    const descriptions = {
+        'signet': '适合专业签名验证',
+        'gnn': '基于关键点结构,对旋转/缩放鲁棒',
+        'clip': '通用视觉模型,适合多样化图像'
+    };
+
+    algorithmSelect.value = state.algorithm;
+    if (algorithmDesc) {
+        algorithmDesc.textContent = descriptions[state.algorithm] || '';
+    }
+
     algorithmSelect.addEventListener('change', (e) => {
         state.algorithm = e.target.value;
         
         // 更新算法描述
-        const descriptions = {
-            'signet': '适合专业签名验证',
-            'gnn': '基于关键点结构,对旋转/缩放鲁棒',
-            'clip': '通用视觉模型,适合多样化图像'
-        };
-        
-        algorithmDesc.textContent = descriptions[state.algorithm] || '';
+        if (algorithmDesc) {
+            algorithmDesc.textContent = descriptions[state.algorithm] || '';
+        }
         console.log('算法切换到:', state.algorithm);
     });
 }

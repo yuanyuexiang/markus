@@ -448,11 +448,11 @@
         <div class="algorithm-selector" id="algorithmSelector" style="text-align: center; margin-bottom: 20px;">
             <label style="margin-right: 10px; font-weight: bold; color: #333;">验证算法:</label>
             <select id="algorithmSelect" style="padding: 8px 16px; border-radius: 6px; border: 2px solid #667eea; font-size: 14px; cursor: pointer;">
-                <option value="gnn">GNN (图神经网络,自动清洁,默认)</option>
-                <option value="signet">SigNet (CNN模型)</option>
+                <option value="signet" selected>SigNet (CNN模型,默认推荐)</option>
+                <option value="gnn">GNN (图神经网络,可选)</option>
                 <option value="clip">CLIP (通用视觉模型)</option>
             </select>
-            <span style="margin-left: 10px; color: #666; font-size: 12px;" id="algorithmDesc">基于关键点匹配,自动清洁</span>
+            <span style="margin-left: 10px; color: #666; font-size: 12px;" id="algorithmDesc">适合专业签名验证</span>
         </div> 
         
         <!-- 上传区域 -->
