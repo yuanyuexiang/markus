@@ -233,7 +233,7 @@ class SignatureStrokeAnalyzer:
         return False, ""
 
 
-def quick_signature_check(image1: np.ndarray, image2: np.ndarray) -> Dict:
+def quick_signature_check(image1: np.ndarray, image2: np.ndarray, thresholds: Optional[Dict] = None) -> Dict:
     """
     快速签名预检查 (便捷函数)
     
@@ -260,8 +260,8 @@ def quick_signature_check(image1: np.ndarray, image2: np.ndarray) -> Dict:
     # 计算差异
     differences = analyzer.calculate_difference(features1, features2)
     
-    # 判断是否拒绝
-    should_reject, reason = analyzer.should_fast_reject(features1, features2)
+    # 判断是否拒绝（允许外部传入更保守/更激进的阈值）
+    should_reject, reason = analyzer.should_fast_reject(features1, features2, thresholds=thresholds)
     
     return {
         'should_reject': should_reject,

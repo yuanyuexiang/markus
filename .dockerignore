@@ -17,7 +17,7 @@ frontend.log
 
 # 上传的文件和模型缓存
 backend/uploads/
-backend/models/
+backend/uploaded_samples/
 
 # Git
 .git/

@@ -110,8 +110,11 @@ def load_signet_model():
         from preprocess.normalize import preprocess_signature
         _signet_imports['SigNetModel'] = SigNetModel
         _signet_imports['preprocess_signature'] = preprocess_signature
-        
-        signet_model = SigNetModel('models/signet.pkl')
+
+        # 使用 backend 目录下的 models 路径，避免受当前工作目录影响
+        backend_dir = os.path.dirname(os.path.abspath(__file__))
+        model_path = os.path.join(backend_dir, 'models', 'signet.pkl')
+        signet_model = SigNetModel(model_path)
         print("✅ SigNet签名验证模型加载完成")
         return signet_model
     except Exception as e:
@@ -382,6 +385,9 @@ async def verify_signature(
     """
     start_time = time.time()
 
+    degraded_mode = False
+    degraded_reason = None
+
     try:
         # 读取图片（一次读取字节，按需生成灰度/彩色版本）
         template_bytes = await template_image.read()
@@ -419,8 +425,17 @@ async def verify_signature(
             from stroke_analyzer import quick_signature_check
             template_np = np.array(template_img)
             query_np = np.array(query_img)
-            
-            stroke_check = quick_signature_check(template_np, query_np)
+
+            # 更保守的快速拒绝阈值：优先降低误杀（准确率/召回更重要）
+            stroke_thresholds = {
+                'stroke_count_diff_max': 0.70,
+                'aspect_ratio_diff_max': 0.75,
+                'density_diff_max': 0.75,
+                'bbox_area_diff_max': 0.85,
+                'combined_score_max': 1.85,
+            }
+
+            stroke_check = quick_signature_check(template_np, query_np, thresholds=stroke_thresholds)
             print(f"🔍 笔画特征检查: {stroke_check}")
             
             if stroke_check['should_reject']:
@@ -529,14 +544,14 @@ async def verify_signature(
                 clean_info = f"+clean({clean_mode})" if result.get('clean_enabled') else ""
                 algorithm_used = f"SigNet[{pipeline}{clean_info}]"
                 threshold = 0.92  # SigNet阈值
-                if signature_ssim is not None:
-                    # SSIM为人工裁剪/轻微变形提供兜底
-                    similarity = max(similarity, min(0.98, signature_ssim * 0.95))
+                # SSIM 仅作为诊断指标返回，不直接抬升最终分数，避免误通过
             else:
-                # SigNet失败,回退到CLIP
+                # SigNet失败：只做诊断性 CLIP fallback，但不允许自动通过
+                degraded_mode = True
+                degraded_reason = "SigNet unavailable or failed; falling back to CLIP for diagnostic only"
                 similarity = compute_clip_similarity(template_img, query_img)
                 algorithm_used = "CLIP(fallback)"
-                threshold = 0.85
+                threshold = 0.99
         
         elif algorithm == "clip":
             # 使用CLIP验证
@@ -564,9 +579,11 @@ async def verify_signature(
                     algorithm_used = "SigNet"
                     threshold = 0.92
                 else:
+                    degraded_mode = True
+                    degraded_reason = "SigNet unavailable or failed; falling back to CLIP for diagnostic only"
                     similarity = compute_clip_similarity(template_img, query_img)
                     algorithm_used = "CLIP(fallback)"
-                    threshold = 0.85
+                    threshold = 0.99
             else:
                 # 印章用CLIP
                 similarity = compute_clip_similarity(template_img_rgb, query_img_rgb)
@@ -591,12 +608,15 @@ async def verify_signature(
         final_score = similarity
         
         # 置信度评估（只基于CLIP）
-        if final_score > threshold + 0.05:
-            confidence = 'high'
-        elif final_score < threshold - 0.10:
+        if degraded_mode:
             confidence = 'low'
         else:
-            confidence = 'medium'
+            if final_score > threshold + 0.05:
+                confidence = 'high'
+            elif final_score < threshold - 0.10:
+                confidence = 'low'
+            else:
+                confidence = 'medium'
         
         # 生成建议
         type_name = "签名" if verification_type == 'signature' else "图章"
@@ -622,7 +642,8 @@ async def verify_signature(
             'signet_pipeline': result.get('pipeline') if verification_type == "signature" and result is not None else None,
             'final_score': round(final_score, 4),
             'confidence': confidence,
-            'is_authentic': final_score > threshold and confidence != 'low',
+            # 降级模式下禁止自动通过（避免 CLIP 对签名误判）
+            'is_authentic': (False if degraded_mode else (final_score > threshold and confidence != 'low')),
             'threshold': threshold,
             'recommendation': recommendation,
             'processing_time_ms': round(processing_time * 1000, 2),
@@ -633,6 +654,10 @@ async def verify_signature(
             'gnn_keypoints_query': gnn_info.get('keypoints_query') if gnn_info else None,
             'gnn_distance': gnn_info.get('gnn_distance') if gnn_info else None
         }
+
+        if degraded_mode:
+            response_data['degraded_mode'] = True
+            response_data['warning'] = degraded_reason
         
         # 添加调试图像路径（如果有）
         if verification_type == "signature" and result is not None and 'debug_images' in result:

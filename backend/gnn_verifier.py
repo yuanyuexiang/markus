@@ -43,6 +43,11 @@ class GNNSignatureVerifier:
     def __init__(self, model_path='signature_gnn_model.pth'):
         """初始化验证器并加载模型"""
         self.model = SignatureGNN(input_dim=6, hidden_dim=64, output_dim=128)
+
+        # 兼容不同工作目录：默认模型路径按 backend 目录解析
+        if not os.path.isabs(model_path):
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            model_path = os.path.join(base_dir, model_path)
         
         if os.path.exists(model_path):
             self.model.load_state_dict(torch.load(model_path, map_location='cpu'))
