@@ -79,13 +79,19 @@ def load_signet_model():
         return signet_model
     
     try:
+        import sys
+
+        # 确保 backend 目录在 sys.path 中，避免在不同启动方式下导入失败
+        backend_dir = os.path.dirname(os.path.abspath(__file__))
+        if backend_dir not in sys.path:
+            sys.path.insert(0, backend_dir)
+
         from signet_model import SigNetModel
         from preprocess.normalize import preprocess_signature
         _signet_imports['SigNetModel'] = SigNetModel
         _signet_imports['preprocess_signature'] = preprocess_signature
 
         # 使用 backend 目录下的 models 路径，避免受当前工作目录影响
-        backend_dir = os.path.dirname(os.path.abspath(__file__))
         model_path = os.path.join(backend_dir, 'models', 'signet.pkl')
         signet_model = SigNetModel(model_path)
         print("✅ SigNet签名验证模型加载完成")
@@ -248,19 +254,34 @@ def compute_signet_similarity(template_img, query_img, enable_clean=True, clean_
         if auto_valid:
             dist_auto = model.compute_similarity(t_auto, q_auto)
 
-        # 选择更优路径
-        if dist_auto is not None and dist_auto <= dist_fallback:
-            euclidean_dist = dist_auto
-            pipeline = pipeline_name
-            ssim_inputs = (t_auto, q_auto)
-        else:
+        # 选择路径：当两条路径“明显不一致”时，采用更保守的距离（更大）来降低误通过
+        if dist_auto is None:
             euclidean_dist = dist_fallback
             pipeline = 'classical'
-            # SSIM 优先使用自动裁剪结果
-            if auto_valid:
-                ssim_inputs = (t_auto, q_auto)
+            ssim_inputs = (fallback_template, fallback_query)
+        else:
+            delta = abs(dist_auto - dist_fallback)
+
+            # 小差异：认为两条路径一致，使用更小距离（更乐观，召回更好）
+            if delta <= 0.003:
+                if dist_auto <= dist_fallback:
+                    euclidean_dist = dist_auto
+                    pipeline = pipeline_name
+                    ssim_inputs = (t_auto, q_auto)
+                else:
+                    euclidean_dist = dist_fallback
+                    pipeline = 'classical'
+                    ssim_inputs = (fallback_template, fallback_query)
             else:
-                ssim_inputs = (fallback_template, fallback_query)
+                # 大差异：保守策略，使用更大距离（更难通过，降低误通过）
+                if dist_auto >= dist_fallback:
+                    euclidean_dist = dist_auto
+                    pipeline = pipeline_name
+                    ssim_inputs = (t_auto, q_auto)
+                else:
+                    euclidean_dist = dist_fallback
+                    pipeline = 'classical'
+                    ssim_inputs = (fallback_template, fallback_query)
         
         # 转换为相似度分数(0-1)
         threshold_dist = 0.15  # SigNet论文阈值
@@ -275,6 +296,8 @@ def compute_signet_similarity(template_img, query_img, enable_clean=True, clean_
         result = {
             'similarity': float(similarity),
             'distance': float(euclidean_dist),
+            'distance_classical': float(dist_fallback),
+            'distance_auto': (float(dist_auto) if dist_auto is not None else None),
             'ssim': float(ssim_score) if ssim_score is not None else None,
             'pipeline': pipeline,
             'clean_enabled': enable_clean,
