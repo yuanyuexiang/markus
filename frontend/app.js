@@ -2,6 +2,7 @@
 const state = {
     verificationType: 'signature',
     algorithm: 'signet',  // 默认使用SigNet算法(更适合签名)
+    lastSignatureAlgorithm: 'signet',
     templateImage: null,
     queryImage: null,
     templateCropped: null,
@@ -295,8 +296,17 @@ document.querySelectorAll('.type-btn').forEach(btn => {
         const algorithmSelector = document.getElementById('algorithmSelector');
         if (state.verificationType === 'signature') {
             algorithmSelector.style.display = 'block';
+            // 恢复签名算法（尊重用户上次选择）
+            state.algorithm = state.lastSignatureAlgorithm || 'signet';
+            if (algorithmSelect) {
+                algorithmSelect.value = state.algorithm;
+                algorithmSelect.dispatchEvent(new Event('change'));
+            }
         } else {
             algorithmSelector.style.display = 'none';
+            // 印章强制使用CLIP（即使选择器隐藏，也要保证请求参数正确）
+            state.lastSignatureAlgorithm = state.algorithm;
+            state.algorithm = 'clip';
         }
         
         // 更新工具提示

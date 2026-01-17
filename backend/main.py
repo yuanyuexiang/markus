@@ -32,6 +32,17 @@ def _open_image_as_grayscale(upload_bytes: bytes) -> Image.Image:
         img = Image.alpha_composite(background, img.convert("RGBA")).convert("RGB")
     return img.convert("L")
 
+
+def _open_image_as_rgb(upload_bytes: bytes) -> Image.Image:
+    """Open an uploaded image and convert it to RGB on a white background."""
+    img = Image.open(io.BytesIO(upload_bytes))
+    if img.mode in ("RGBA", "LA"):
+        background = Image.new("RGBA", img.size, (255, 255, 255, 255))
+        img = Image.alpha_composite(background, img.convert("RGBA")).convert("RGB")
+    else:
+        img = img.convert("RGB")
+    return img
+
 app = FastAPI(title="签名图章验证系统")
 
 # 允许跨域
@@ -372,9 +383,19 @@ async def verify_signature(
     start_time = time.time()
 
     try:
-        # 读取图片并转为灰度L（透明背景会先铺白）
-        template_img = _open_image_as_grayscale(await template_image.read())
-        query_img = _open_image_as_grayscale(await query_image.read())
+        # 读取图片（一次读取字节，按需生成灰度/彩色版本）
+        template_bytes = await template_image.read()
+        query_bytes = await query_image.read()
+
+        # 签名：灰度；印章：CLIP 更适合用 RGB（保留红章颜色信息）
+        template_img = _open_image_as_grayscale(template_bytes)
+        query_img = _open_image_as_grayscale(query_bytes)
+        template_img_rgb = _open_image_as_rgb(template_bytes)
+        query_img_rgb = _open_image_as_rgb(query_bytes)
+
+        # ✅ 兜底：印章验证强制使用 CLIP，避免误用 SigNet/GNN
+        if verification_type == "seal":
+            algorithm = "clip"
 
         # 🔥 保存用户上传的真实裁剪图片
         save_dir = "uploaded_samples"
@@ -384,44 +405,50 @@ async def verify_signature(
         template_path = os.path.join(save_dir, f"{verification_type}_template_{timestamp}.png")
         query_path = os.path.join(save_dir, f"{verification_type}_query_{timestamp}.png")
 
-        template_img.save(template_path)
-        query_img.save(query_path)
+        # 保存用于调试的输入图（签名保存灰度；印章保存RGB）
+        if verification_type == "seal":
+            template_img_rgb.save(template_path)
+            query_img_rgb.save(query_path)
+        else:
+            template_img.save(template_path)
+            query_img.save(query_path)
         print(f"💾 已保存样本: {template_path}, {query_path}")
         
-        # ✅ 笔画特征快速筛选 (方案D)
-        from stroke_analyzer import quick_signature_check
-        template_np = np.array(template_img)
-        query_np = np.array(query_img)
-        
-        stroke_check = quick_signature_check(template_np, query_np)
-        print(f"🔍 笔画特征检查: {stroke_check}")
-        
-        if stroke_check['should_reject']:
-            # 快速拒绝,不需要深度学习模型
-            processing_time = time.time() - start_time
-            result = {
-                "success": True,  # 添加success字段
-                "match": False,
-                "final_score": 0.0,  # 添加final_score字段
-                "confidence": "low",  # 置信度改为字符串
-                "algorithm": "笔画筛选器",
-                "algorithm_used": "stroke_filter",
-                "type": verification_type,  # 添加type字段
-                "verification_type": verification_type,
-                "template_path": template_path,
-                "query_path": query_path,
-                "fast_reject": True,
-                "reject_reason": stroke_check['reason'],
-                "stroke_features": {
-                    "template": stroke_check['template_features'],
-                    "query": stroke_check['query_features'],
-                    "differences": stroke_check['differences']
-                },
-                "processing_time_ms": round(processing_time * 1000, 2)
-            }
-            return result
-        
-        print("✅ 笔画特征检查通过,继续深度学习验证...")
+        # ✅ 笔画特征快速筛选 (仅签名). 印章不做该筛选，避免误杀
+        if verification_type == "signature":
+            from stroke_analyzer import quick_signature_check
+            template_np = np.array(template_img)
+            query_np = np.array(query_img)
+            
+            stroke_check = quick_signature_check(template_np, query_np)
+            print(f"🔍 笔画特征检查: {stroke_check}")
+            
+            if stroke_check['should_reject']:
+                # 快速拒绝,不需要深度学习模型
+                processing_time = time.time() - start_time
+                result = {
+                    "success": True,  # 添加success字段
+                    "match": False,
+                    "final_score": 0.0,  # 添加final_score字段
+                    "confidence": "low",  # 置信度改为字符串
+                    "algorithm": "笔画筛选器",
+                    "algorithm_used": "stroke_filter",
+                    "type": verification_type,  # 添加type字段
+                    "verification_type": verification_type,
+                    "template_path": template_path,
+                    "query_path": query_path,
+                    "fast_reject": True,
+                    "reject_reason": stroke_check['reason'],
+                    "stroke_features": {
+                        "template": stroke_check['template_features'],
+                        "query": stroke_check['query_features'],
+                        "differences": stroke_check['differences']
+                    },
+                    "processing_time_ms": round(processing_time * 1000, 2)
+                }
+                return result
+            
+            print("✅ 笔画特征检查通过,继续深度学习验证...")
         
         # 根据算法选择计算相似度
         algorithm_used = ""
@@ -514,7 +541,11 @@ async def verify_signature(
         elif algorithm == "clip":
             # 使用CLIP验证
             print("🎨 使用CLIP算法...")
-            similarity = compute_clip_similarity(template_img, query_img)
+            # 印章优先使用RGB输入（保留红章信息）
+            if verification_type == "seal":
+                similarity = compute_clip_similarity(template_img_rgb, query_img_rgb)
+            else:
+                similarity = compute_clip_similarity(template_img, query_img)
             algorithm_used = "CLIP"
             threshold = 0.88 if verification_type == "seal" else 0.85
         
@@ -538,7 +569,7 @@ async def verify_signature(
                     threshold = 0.85
             else:
                 # 印章用CLIP
-                similarity = compute_clip_similarity(template_img, query_img)
+                similarity = compute_clip_similarity(template_img_rgb, query_img_rgb)
                 algorithm_used = "CLIP"
                 threshold = 0.88
         
