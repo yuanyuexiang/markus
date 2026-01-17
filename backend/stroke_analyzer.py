@@ -47,13 +47,23 @@ class SignatureStrokeAnalyzer:
             _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
         else:  # 黑底白字
             _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-        
-        # 形态学处理,去除噪点
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-        binary = cv2.morphologyEx(binary, cv2.MORPH_OPEN, kernel)
+
+        # 对小尺寸/低墨迹裁剪：MORPH_OPEN(3x3) 很容易把细笔画直接抹掉，导致 stroke_count=0
+        h, w = binary.shape[:2]
+        min_dim = min(h, w)
+        kernel_size = 3 if min_dim >= 80 else 2
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (kernel_size, kernel_size))
+
+        total_pixels_raw = int(np.sum(binary > 0))
+        if total_pixels_raw < 200:
+            # 低墨迹时优先做闭运算连接断点，避免开运算误删
+            binary = cv2.morphologyEx(binary, cv2.MORPH_CLOSE, kernel)
+        else:
+            # 正常情况下用开运算去噪
+            binary = cv2.morphologyEx(binary, cv2.MORPH_OPEN, kernel)
         
         # 1. 计算签名像素总数
-        total_pixels = np.sum(binary > 0)
+        total_pixels = int(np.sum(binary > 0))
         
         # 2. 计算密度
         total_area = binary.shape[0] * binary.shape[1]
@@ -61,12 +71,13 @@ class SignatureStrokeAnalyzer:
         
         # 3. 找到签名的外接矩形
         coords = cv2.findNonZero(binary)
-        if coords is None or len(coords) < 10:
+        # 墨迹太少/几乎空白：笔画特征不可靠，直接标记 invalid，交给深度模型
+        if coords is None or len(coords) < 10 or total_pixels < 50:
             # 图像太空或没有签名
             return {
                 'stroke_count': 0,
-                'total_pixels': 0,
-                'density': 0,
+                'total_pixels': int(total_pixels),
+                'density': float(density),
                 'aspect_ratio': 0,
                 'bbox_area': 0,
                 'avg_stroke_length': 0,
@@ -84,7 +95,8 @@ class SignatureStrokeAnalyzer:
         stroke_count = num_labels - 1
         
         # 过滤掉太小的连通域(噪点)
-        min_area = 10  # 最小面积阈值
+        # 使用与图像面积相关的阈值，避免小图/细笔画全被当作噪点
+        min_area = max(3, int(total_area * 0.0002))
         valid_strokes = 0
         total_stroke_area = 0
         
@@ -95,6 +107,20 @@ class SignatureStrokeAnalyzer:
                 total_stroke_area += area
         
         stroke_count = valid_strokes
+
+        # 连通域全被过滤掉：说明笔画非常细碎/图像过小，特征不可靠，避免触发快速拒绝
+        # （否则会出现 stroke_count=0 vs 2 这类 100% 差异误杀同一人的签名）
+        if stroke_count == 0:
+            return {
+                'stroke_count': 0,
+                'total_pixels': int(total_pixels),
+                'density': float(density),
+                'aspect_ratio': float(aspect_ratio),
+                'bbox_area': int(bbox_area),
+                'avg_stroke_length': 0,
+                'stroke_thickness': 0,
+                'valid': False
+            }
         
         # 5. 估算平均笔画长度
         # 使用骨架化来估算笔画长度
