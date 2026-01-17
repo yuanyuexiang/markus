@@ -100,7 +100,7 @@ def test_stroke_filter():
                 'query_image': ('query.png', f2, 'image/png')
             }
             data = {
-                'algorithm': 'gnn',
+                'algorithm': 'signet',
                 'verification_type': 'signature'
             }
             
@@ -114,10 +114,10 @@ def test_stroke_filter():
                 print(f"   处理时间: {result.get('processing_time_ms', 0):.2f}ms")
                 
                 if result.get('fast_reject'):
-                    print(f"\n⚡ 快速拒绝! (节省了GNN计算)")
+                    print(f"\n⚡ 快速拒绝! (节省了深度模型计算)")
                     print(f"   原因: {result.get('reject_reason')}")
                 else:
-                    print(f"\n✅ 进入GNN深度验证")
+                    print(f"\n✅ 进入深度验证")
                     print(f"   相似度: {result.get('final_score', 0) * 100:.1f}%")
     
     print("\n" + "=" * 60)
