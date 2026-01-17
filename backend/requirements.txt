@@ -15,7 +15,6 @@ scikit-image==0.25.2
 # 深度学习
 torch==2.2.2
 torchvision==0.17.2
-torch-geometric==2.7.0
 
 # CLIP 依赖
 ftfy==6.1.1

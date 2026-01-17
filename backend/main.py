@@ -54,33 +54,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# GNN验证器延迟加载
-gnn_verifier = None
-
-def load_gnn_verifier():
-    """延迟加载GNN验证器"""
-    global gnn_verifier
-    if gnn_verifier is not None:
-        return gnn_verifier
-    
-    try:
-        import sys
-        import os
-        # 添加backend目录到Python路径
-        backend_dir = os.path.dirname(os.path.abspath(__file__))
-        if backend_dir not in sys.path:
-            sys.path.insert(0, backend_dir)
-        
-        from gnn_verifier import get_gnn_verifier
-        gnn_verifier = get_gnn_verifier()
-        print("✅ GNN验证器加载完成")
-        return gnn_verifier
-    except Exception as e:
-        import traceback
-        print(f"⚠️ GNN验证器加载失败: {e}")
-        print(traceback.format_exc())
-        return None
-
 # 确保必要的目录存在
 os.makedirs("uploaded_samples", exist_ok=True)
 os.makedirs("uploads", exist_ok=True)
@@ -366,7 +339,7 @@ async def verify_signature(
     template_image: UploadFile = File(...),
     query_image: UploadFile = File(...),
     verification_type: str = Form(default="signature"),
-    algorithm: str = Form(default="signet"),  # 新增: signet, gnn, clip
+    algorithm: str = Form(default="signet"),
     enable_clean: bool = Form(default=True),
     clean_mode: str = Form(default="conservative")
 ):
@@ -375,11 +348,10 @@ async def verify_signature(
     
     算法选项:
     - signet: SigNet专业模型(默认,适合签名)
-    - gnn: 图神经网络(基于关键点结构)
     - clip: CLIP视觉模型(适合印章)
     
     参数:
-    - algorithm: 验证算法 ('signet', 'gnn', 'clip')
+    - algorithm: 验证算法 ('signet', 'clip')
     - enable_clean: 是否启用签名清洁（去除杂质）
     - clean_mode: 清洁模式 'conservative'(中文签名) 或 'aggressive'(英文签名)
     """
@@ -387,6 +359,7 @@ async def verify_signature(
 
     degraded_mode = False
     degraded_reason = None
+    algorithm_remapped_from = None
 
     try:
         # 读取图片（一次读取字节，按需生成灰度/彩色版本）
@@ -399,9 +372,14 @@ async def verify_signature(
         template_img_rgb = _open_image_as_rgb(template_bytes)
         query_img_rgb = _open_image_as_rgb(query_bytes)
 
-        # ✅ 兜底：印章验证强制使用 CLIP，避免误用 SigNet/GNN
+        # ✅ 兜底：印章验证强制使用 CLIP，避免误用 SigNet
         if verification_type == "seal":
             algorithm = "clip"
+
+        # ✅ 兼容旧请求：项目已移除 GNN，但为了不破坏旧调用，自动映射到 SigNet
+        if algorithm == "gnn":
+            algorithm_remapped_from = "gnn"
+            algorithm = "signet"
 
         # 🔥 保存用户上传的真实裁剪图片
         save_dir = "uploaded_samples"
@@ -469,63 +447,6 @@ async def verify_signature(
         algorithm_used = ""
         euclidean_distance = None
         result = None
-        gnn_info = {}
-        
-        # 强制算法选择逻辑
-        if algorithm == "gnn":
-            # 使用GNN验证
-            print("🧠 使用GNN算法...")
-            gnn = load_gnn_verifier()
-            if gnn is not None and gnn.model is not None:
-                # 转为numpy数组
-                template_np = np.array(template_img)
-                query_np = np.array(query_img)
-                
-                # GNN自动使用签名清洁功能 (保守模式适合中文签名)
-                try:
-                    from preprocess.auto_crop import clean_signature_with_morph
-                    # 清洁图片去除噪声
-                    template_cleaned = clean_signature_with_morph(template_np, mode='conservative')
-                    query_cleaned = clean_signature_with_morph(query_np, mode='conservative')
-                    # 反转 (清洁后是前景255,需要转成背景255)
-                    template_cleaned = cv2.bitwise_not(template_cleaned)
-                    query_cleaned = cv2.bitwise_not(query_cleaned)
-                    
-                    # 保存清洁后的图片用于调试
-                    debug_dir = os.path.join(save_dir, "debug")
-                    os.makedirs(debug_dir, exist_ok=True)
-                    template_clean_path = os.path.join(debug_dir, f"template_cleaned_{timestamp}.png")
-                    query_clean_path = os.path.join(debug_dir, f"query_cleaned_{timestamp}.png")
-                    cv2.imwrite(template_clean_path, template_cleaned)
-                    cv2.imwrite(query_clean_path, query_cleaned)
-                    print(f"✅ GNN已保存清洁图片: {template_clean_path}, {query_clean_path}")
-                    
-                    # 使用清洁后的图片进行GNN验证
-                    gnn_result = gnn.verify(template_cleaned, query_cleaned)
-                except Exception as clean_error:
-                    print(f"⚠️ 签名清洁失败,使用原始图片: {clean_error}")
-                    gnn_result = gnn.verify(template_np, query_np)
-                
-                if 'error' not in gnn_result:
-                    # GNN成功
-                    similarity = gnn_result['confidence']
-                    euclidean_distance = gnn_result['distance']
-                    gnn_info = {
-                        'keypoints_template': gnn_result['keypoints_template'],
-                        'keypoints_query': gnn_result['keypoints_query'],
-                        'gnn_distance': gnn_result['distance'],
-                        'gnn_threshold': gnn_result['threshold']
-                    }
-                    algorithm_used = "GNN"
-                    threshold = 0.5  # GNN使用confidence阈值
-                else:
-                    # GNN失败,回退到SigNet
-                    print(f"⚠️ GNN失败: {gnn_result['error']}, 回退到SigNet")
-                    algorithm = "signet"
-            else:
-                # GNN未加载,回退到SigNet
-                print("⚠️ GNN模型未加载, 回退到SigNet")
-                algorithm = "signet"
         
         if algorithm == "signet":
             # 使用SigNet验证（支持清洁功能）
@@ -599,8 +520,6 @@ async def verify_signature(
             print(f"📏 欧氏距离: {euclidean_distance:.4f}")
         if verification_type == "signature" and result is not None and result.get('ssim') is not None:
             print(f"🧮 SSIM: {result['ssim']:.4f}")
-        if gnn_info:
-            print(f"🧠 GNN关键点: template={gnn_info['keypoints_template']}, query={gnn_info['keypoints_query']}")
         print(f"📊 阈值: {threshold:.4f}")
         print(f"{'='*60}\n")
         
@@ -649,11 +568,14 @@ async def verify_signature(
             'processing_time_ms': round(processing_time * 1000, 2),
             'clean_enabled': enable_clean if verification_type == "signature" else None,
             'clean_mode': clean_mode if verification_type == "signature" and enable_clean else None,
-            # GNN特有信息
-            'gnn_keypoints_template': gnn_info.get('keypoints_template') if gnn_info else None,
-            'gnn_keypoints_query': gnn_info.get('keypoints_query') if gnn_info else None,
-            'gnn_distance': gnn_info.get('gnn_distance') if gnn_info else None
+            # 兼容旧字段（历史上用于 GNN）
+            'gnn_keypoints_template': None,
+            'gnn_keypoints_query': None,
+            'gnn_distance': None
         }
+
+        if algorithm_remapped_from is not None:
+            response_data['notice'] = f"algorithm '{algorithm_remapped_from}' 已移除，已自动使用 'signet'"
 
         if degraded_mode:
             response_data['degraded_mode'] = True

@@ -330,7 +330,6 @@ if (algorithmSelect) {
     // 初始化下拉框显示，确保 UI 与 state.algorithm 一致
     const descriptions = {
         'signet': '适合专业签名验证',
-        'gnn': '基于关键点结构,对旋转/缩放鲁棒',
         'clip': '通用视觉模型,适合多样化图像'
     };
 
@@ -662,9 +661,7 @@ function displayResult(result) {
     
     if (algorithmName.includes('SigNet')) {
         algorithmEmoji = '🧠 SigNet';
-    } else if (algorithmName === 'GNN') {
-        algorithmEmoji = '🕸️ GNN';
-    } else if (algorithmName === 'CLIP') {
+    } else if (algorithmName.includes('CLIP')) {
         algorithmEmoji = '🎨 CLIP';
     }
     
@@ -674,18 +671,12 @@ function displayResult(result) {
     const similarity = result.similarity || result.final_score;
     document.getElementById('similarityScore').textContent = (similarity * 100).toFixed(1) + '%';
     
-    // 显示欧氏距离(SigNet/GNN)
-    const euclideanDist = result.euclidean_distance || result.gnn_distance;
+    // 显示欧氏距离(SigNet)
+    const euclideanDist = result.euclidean_distance;
     if (euclideanDist !== null && euclideanDist !== undefined) {
         document.getElementById('euclideanDistance').textContent = euclideanDist.toFixed(4);
     } else {
         document.getElementById('euclideanDistance').textContent = 'N/A';
-    }
-    
-    // 显示GNN关键点信息(如果使用GNN)
-    if (algorithmName === 'GNN' && result.gnn_keypoints_template) {
-        const kpInfo = `关键点: T=${result.gnn_keypoints_template}, Q=${result.gnn_keypoints_query}`;
-        document.getElementById('euclideanDistance').textContent += ` (${kpInfo})`;
     }
     
     // 显示处理时间
